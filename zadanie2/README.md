@@ -9,3 +9,9 @@
 make
 ./prog
 ```
+Или же:
+
+```
+make
+make run
+```
