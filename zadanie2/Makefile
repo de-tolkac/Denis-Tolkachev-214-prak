@@ -1,2 +1,2 @@
 all:
-	g++ main.cpp ProductsClass.cpp -o prog
+	g++ -Wall -Werror main.cpp ProductsClass.cpp -o prog
