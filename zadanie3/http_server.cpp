@@ -27,15 +27,30 @@
 using std::cout;
 using std::endl;
 using std::string;
+using std::to_string;
 using std::ofstream;
 using std::find;
 using std::vector;
 using std::copy;
 using std::ifstream;
 
+char* configureResponse(int code, string msg, bool appendMessageToBody){
+    string res = "HTTP/1.1 ";
+    res += to_string(code);
+    res += " ";
+    res += msg;
+    if(appendMessageToBody){
+        res += "\nVersion: HTTP/1.1\nContent-type: text/html; charset=utf-8\n\n<html><body><p>";
+        res += msg;
+        res += "</p></body></html>";
+    }else{
+        res += "\nVersion: HTTP/1.1\nContent-type: text/html; charset=utf-8\n\n";
+    }
+    return (char*)res.c_str();
+}
 
 Server::Server(int portNum, string logFile){
-        signal(SIGPIPE, SIG_IGN);
+        signal(SIGPIPE, SIG_IGN); //Быстрофикс. TODO - надо разобраться почему прилетает SIGPIPE.  
         log.open(logFile, std::ios_base::app); 
         time_t st_time;
         st_time = time(NULL);
@@ -62,6 +77,8 @@ Server::Server(int portNum, string logFile){
 		    exit(1);
         }
     }
+
+    /* Метод, который регистрирует новый Get запрос */
     void Server::Get(string path, string response){
         bool pathExists = false;
         for(int i = 0; i < getRequests.size(); i++){
@@ -75,6 +92,8 @@ Server::Server(int portNum, string logFile){
             getRequests.push_back(newPath);
         }
     }
+
+    /* Основной цикл сервера */
     void Server::run(){
         cout << CLEARSCREEN;
         cout << "Сервер запущен на " << GREEN << "127.0.0.1:" << port << RESET << endl;
@@ -123,28 +142,30 @@ Server::Server(int portNum, string logFile){
                     string line;
                     ifstream responseFile(getRequests[pathId].responseFile);
                     if (responseFile.is_open()){
-                        char res[] = "HTTP/1.1 200 OK\nVersion: HTTP/1.1\nContent-type: text/html;\n\n";
+                        char* res = configureResponse(200, "OK", false);
                         write(clientFD, res, sizeof(char)*strlen(res));
                         while (getline(responseFile, line)){
                             write(clientFD, line.c_str(), sizeof(char)*strlen(line.c_str()));
                         }
                         responseFile.close();
                     }else{
-                        char res[] = "HTTP/1.1 500 Internal Server Error\nVersion: HTTP/1.1\nContent-type: text/html; charset=utf-8\n\n<html><body><p>Внутренняя ошибка сервера</p></body></html>";
+                        char* res = configureResponse(500, "Internal Server Error", true);
                         send(clientFD, res, strlen(res), 0);
                     }
                 }else{
-                    char res[] = "HTTP/1.1 404 OK\nVersion: HTTP/1.1\nContent-type: text/html; charset=utf-8\n\n<html><body><p>Страница, которую вы запрашиваете, не существует!</p></body></html>";
+                    char* res = configureResponse(404, "Not found!", true);
                     send(clientFD, res, strlen(res), 0);
                 }
             }else{
-                char res[] = "HTTP/1.1 501 Not Implemented\nVersion: HTTP/1.1\nContent-type: text/html; charset=utf-8\n\n<html><body><p>Method is not Implemented yet!</p></body></html>";
+                char* res = configureResponse(501, "Not Implemented", true);
                 send(clientFD, res, strlen(res), 0);
             }
             shutdown(clientFD, SHUT_RDWR);
             close(clientFD);
         }
     }
+
+    /* TODO - разобраться почему не прорабавтывает дестркутор при получении сигнала SIGINT */
     Server::~Server(){
         cout << "Сервер на порту " << port << " остановлен\n"; 
         close(serverSocket);
