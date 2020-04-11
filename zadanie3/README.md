@@ -15,10 +15,15 @@ $ make run
 Когда мы формируем наш сервер, можем в качестве параметра передать номер порта и имя файла для логов. По умолчанию сервер рабоает на 8080 порте и пишет логи в "log.txt".
 
 ```
-Server app(3000, "logFile.txt");
-app.Get("/", "test1.html");
-app.Get("/hello", "test2.html"); //файла не существует, получаем ответ 500
-app.run();
+#include "http_server.h"
+
+int main(){
+    Server app(3000, "logFile.txt");
+    app.Get("/", "test1.html");
+    app.Get("/hello", "test2.html"); //файла не существует, получаем ответ 500
+    app.run();
+    return 0;
+}
 ```
 ### Обработка ошибок
 ![](https://i.ibb.co/kSKtC7R/2020-04-10-0-15-50.png)
