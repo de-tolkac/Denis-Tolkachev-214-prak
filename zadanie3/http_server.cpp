@@ -39,14 +39,21 @@ char* configureResponse(int code, string msg, bool appendMessageToBody){
     res += to_string(code);
     res += " ";
     res += msg;
+    res += "\r\nStatus: ";
+    res += to_string(code);
+    res += " ";
+    res += msg;
     if(appendMessageToBody){
-        res += "\nVersion: HTTP/1.1\nContent-type: text/html; charset=utf-8\n\n<html><body><p>";
+        res += "\r\nContent-type: text/html; charset=utf-8\r\n\r\n<html><body><p>";
         res += msg;
         res += "</p></body></html>";
     }else{
-        res += "\nVersion: HTTP/1.1\nContent-type: text/html; charset=utf-8\n\n";
+        res += "\r\nContent-type: text/html; charset=utf-8\r\n\r\n";
     }
-    return (char*)res.c_str();
+    int n = res.length();
+    char* ret = (char*)malloc((n + 1)*sizeof(char));
+    strcpy(ret, res.c_str());
+    return ret;
 }
 
 Server::Server(int portNum, string logFile){
@@ -81,7 +88,7 @@ Server::Server(int portNum, string logFile){
     /* Метод, который регистрирует новый Get запрос */
     void Server::Get(string path, string response){
         bool pathExists = false;
-        for(int i = 0; i < getRequests.size(); i++){
+        for(int i = 0; i < (int)getRequests.size(); i++){
             if(getRequests[i].dist == path){
                 pathExists = true;
                 break;
@@ -130,7 +137,7 @@ Server::Server(int portNum, string logFile){
                     path[1] = 0;
                 }
                 int pathId = 0;
-                for(int i = 0; i < getRequests.size(); i++){
+                for(int i = 0; i < (int)getRequests.size(); i++){
                     if(getRequests[i].dist == path){
                         pathFound = true;
                         pathId = i;
@@ -144,6 +151,7 @@ Server::Server(int portNum, string logFile){
                     if (responseFile.is_open()){
                         char* res = configureResponse(200, "OK", false);
                         write(clientFD, res, sizeof(char)*strlen(res));
+                        free(res);
                         while (getline(responseFile, line)){
                             write(clientFD, line.c_str(), sizeof(char)*strlen(line.c_str()));
                         }
@@ -151,14 +159,17 @@ Server::Server(int portNum, string logFile){
                     }else{
                         char* res = configureResponse(500, "Internal Server Error", true);
                         send(clientFD, res, strlen(res), 0);
+                        free(res);
                     }
                 }else{
                     char* res = configureResponse(404, "Not found!", true);
                     send(clientFD, res, strlen(res), 0);
+                    free(res);
                 }
             }else{
                 char* res = configureResponse(501, "Not Implemented", true);
                 send(clientFD, res, strlen(res), 0);
+                free(res);
             }
             shutdown(clientFD, SHUT_RDWR);
             close(clientFD);
