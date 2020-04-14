@@ -9,6 +9,8 @@
 #include <vector>
 #include <string.h>
 #include <signal.h>
+#include <sys/time.h>
+#include <fcntl.h>
 
 #include "http_server.h"
 
@@ -23,7 +25,6 @@
 
 #define CLEARSCREEN  "\033[2J\033[1;1H"
 
-
 using std::cout;
 using std::endl;
 using std::string;
@@ -33,6 +34,11 @@ using std::find;
 using std::vector;
 using std::copy;
 using std::ifstream;
+
+struct requestProcess{
+    int fd;
+    int pid;
+};
 
 char* configureResponse(int code, string msg, bool appendMessageToBody){
     string res = "HTTP/1.1 ";
@@ -58,7 +64,7 @@ char* configureResponse(int code, string msg, bool appendMessageToBody){
 
 Server::Server(int portNum, string logFile){
         signal(SIGPIPE, SIG_IGN); //Быстрофикс. TODO - надо разобраться почему прилетает SIGPIPE.  
-        log.open(logFile, std::ios_base::app); 
+        log.open(logFile, std::ios_base::out | std::ios_base::app); 
         time_t st_time;
         st_time = time(NULL);
         log << string('-',20) << endl <<  asctime(localtime(&st_time)) << endl;
@@ -86,7 +92,7 @@ Server::Server(int portNum, string logFile){
     }
 
     /* Метод, который регистрирует новый Get запрос */
-    void Server::Get(string path, string response){
+    void Server::Get(string path, string response, requestType type){
         bool pathExists = false;
         for(int i = 0; i < (int)getRequests.size(); i++){
             if(getRequests[i].dist == path){
@@ -95,7 +101,7 @@ Server::Server(int portNum, string logFile){
             }
         }
         if(!pathExists){
-            getHandler newPath = {path, response};
+            getHandler newPath = {path, response, type};
             getRequests.push_back(newPath);
         }
     }
@@ -115,68 +121,129 @@ Server::Server(int portNum, string logFile){
                 close(serverSocket);
                 exit(1);
             }
-            if (clientFD < 0) {
+            if(clientFD < 0) {
                 cout << "Ошибка принятия запроса\n";
                 close(serverSocket);
                 exit(1);
             }
-            if(!strncmp(request, "GET", 3)){
-                int k = 5;
-                bool pathFound = false;
-                char c = request[k];
-                while(c != ' '){
-                    k++;
-                    c = request[k];
-                }
-                char path[k-3];
-                if(k != 5){
-                    copy(&request[4], &request[k], &path[0]);
-                    path[k-4] = 0;
-                }else{
-                    path[0] = '/';
-                    path[1] = 0;
-                }
-                int pathId = 0;
-                for(int i = 0; i < (int)getRequests.size(); i++){
-                    if(getRequests[i].dist == path){
-                        pathFound = true;
-                        pathId = i;
-                        break;
+            int pid = fork();
+            if(pid == 0){
+                /* Потомок, занимающийся конкретным запросом */
+                if(!strncmp(request, "GET", 3)){
+                    int k = 5;
+                    bool pathFound = false;
+                    requestType type;
+                    char c = request[k];
+                    while(c != ' '){
+                        k++;
+                        c = request[k];
                     }
-                }
-                cout << "Received request from: " << inet_ntoa(ClientAddress.sin_addr) << " to " << GREEN << path << RESET << "\n";;
-                if(pathFound){
-                    string line;
-                    ifstream responseFile(getRequests[pathId].responseFile);
-                    if (responseFile.is_open()){
-                        char* res = configureResponse(200, "OK", false);
-                        write(clientFD, res, sizeof(char)*strlen(res));
-                        free(res);
-                        while (getline(responseFile, line)){
-                            write(clientFD, line.c_str(), sizeof(char)*strlen(line.c_str()));
-                        }
-                        responseFile.close();
+                    char path[k-3];
+                    if(k != 5){
+                        copy(&request[4], &request[k], &path[0]);
+                        path[k-4] = 0;
                     }else{
-                        char* res = configureResponse(500, "Internal Server Error", true);
+                        path[0] = '/';
+                        path[1] = 0;
+                    }
+                    int pathId = 0;
+                    for(int i = 0; i < (int)getRequests.size(); i++){
+                        if(getRequests[i].dist == path){
+                            pathFound = true;
+                            pathId = i;
+                            type = getRequests[i].type;
+                            break;
+                        }
+                    }
+                    cout << "Received request from: " << inet_ntoa(ClientAddress.sin_addr) << " to " << GREEN << path << RESET << "\n";;
+                    if(pathFound){
+                        if(type == static_request){
+                            /* Обрабатываем обычный запрос статической страницы  */
+                            string line;
+                            ifstream responseFile(getRequests[pathId].responseFile);
+                            if (responseFile.is_open()){
+                                char* res = configureResponse(200, "OK", false);
+                                write(clientFD, res, sizeof(char)*strlen(res));
+                                free(res);
+                                while (getline(responseFile, line)){
+                                    write(clientFD, line.c_str(), sizeof(char)*strlen(line.c_str()));
+                                }
+                                responseFile.close();
+                            }else{
+                                char* res = configureResponse(500, "Internal Server Error", true);
+                                send(clientFD, res, strlen(res), 0);
+                                free(res);
+                            }
+                        }else{
+                            
+                            /* CGI */
+                            int status;
+                            string name = to_string(getpid()) + ".txt";
+                            int fd = open(name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
+                            dup2(fd, 1);
+                            if(!fork()){
+                                chdir("./cgi-bin");
+                                string processName = "./" + getRequests[pathId].responseFile;
+                                execlp(processName.c_str(), getRequests[pathId].responseFile.c_str(), NULL);
+                                exit(1);
+                            }
+                            close(fd);
+                            wait(&status);
+                            if(WIFEXITED(status)){
+                                if(WEXITSTATUS(status) == 0){
+                                    string line;
+                                    ifstream responseFile(name);
+                                    if (responseFile.is_open()){
+                                        char* res = configureResponse(200, "OK", false);
+                                        write(clientFD, res, sizeof(char)*strlen(res));
+                                        free(res);
+                                        while (getline(responseFile, line)){
+                                            write(clientFD, line.c_str(), sizeof(char)*strlen(line.c_str()));
+                                        }
+                                        responseFile.close();
+                                    }else{
+                                        char* res = configureResponse(500, "Internal Server Error", true);
+                                        send(clientFD, res, strlen(res), 0);
+                                        free(res);
+                                    }
+                                }else{
+                                    char* res = configureResponse(500, "Internal Server Error", true);
+                                    send(clientFD, res, strlen(res), 0);
+                                }
+                            }else if(WIFSIGNALED(status)){
+                                char* res = configureResponse(500, "Internal Server Error", true);
+                                send(clientFD, res, strlen(res), 0);
+                            }
+                            remove(name.c_str());
+                        }
+                    }else{
+                        char* res = configureResponse(404, "Not found!", true);
                         send(clientFD, res, strlen(res), 0);
                         free(res);
                     }
                 }else{
-                    char* res = configureResponse(404, "Not found!", true);
+                    char* res = configureResponse(501, "Not Implemented", true);
                     send(clientFD, res, strlen(res), 0);
                     free(res);
                 }
+                shutdown(clientFD, SHUT_RDWR);
+                close(clientFD);
+                close(serverSocket);
+                log.close();
+                exit(0);
+            }else if(pid > 0){
+                close(clientFD);
+                int endPID, status;
+                while((endPID = waitpid(0, &status, WNOHANG)) > 0);
             }else{
-                char* res = configureResponse(501, "Not Implemented", true);
-                send(clientFD, res, strlen(res), 0);
-                free(res);
+                /* Паника на борту! */
+                cout << "Произошла критическая " << RED << "ошибка" << RESET << ". Выходим...\n";
+                exit(1);
             }
-            shutdown(clientFD, SHUT_RDWR);
-            close(clientFD);
         }
     }
 
-    /* TODO - разобраться почему не прорабавтывает дестркутор при получении сигнала SIGINT */
+    /* TODO - разобраться почему не прорабатывает дестркутор при получении сигнала SIGINT */
     Server::~Server(){
         cout << "Сервер на порту " << port << " остановлен\n"; 
         close(serverSocket);
