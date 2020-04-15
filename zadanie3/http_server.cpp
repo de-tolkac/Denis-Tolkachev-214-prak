@@ -92,7 +92,7 @@ Server::Server(int portNum, string logFile){
     }
 
     /* Метод, который регистрирует новый Get запрос */
-    void Server::Get(string path, string response, requestType type){
+    void Server::Get(string path, string response){
         bool pathExists = false;
         for(int i = 0; i < (int)getRequests.size(); i++){
             if(getRequests[i].dist == path){
@@ -101,9 +101,15 @@ Server::Server(int portNum, string logFile){
             }
         }
         if(!pathExists){
-            getHandler newPath = {path, response, type};
+            getHandler newPath = {path, response};
             getRequests.push_back(newPath);
         }
+    }
+
+    /* Регистрируем дирректорию с CGI-программами */
+    void Server::use(string dirName){
+        IS_CGI_SET = true;
+        cgiDir = dirName;
     }
 
     /* Основной цикл сервера */
@@ -132,7 +138,6 @@ Server::Server(int portNum, string logFile){
                 if(!strncmp(request, "GET", 3)){
                     int k = 5;
                     bool pathFound = false;
-                    requestType type;
                     char c = request[k];
                     while(c != ' '){
                         k++;
@@ -151,40 +156,43 @@ Server::Server(int portNum, string logFile){
                         if(getRequests[i].dist == path){
                             pathFound = true;
                             pathId = i;
-                            type = getRequests[i].type;
                             break;
                         }
                     }
                     cout << "Received request from: " << inet_ntoa(ClientAddress.sin_addr) << " to " << GREEN << path << RESET << "\n";;
                     if(pathFound){
-                        if(type == static_request){
-                            /* Обрабатываем обычный запрос статической страницы  */
-                            string line;
-                            ifstream responseFile(getRequests[pathId].responseFile);
-                            if (responseFile.is_open()){
-                                char* res = configureResponse(200, "OK", false);
-                                write(clientFD, res, sizeof(char)*strlen(res));
-                                free(res);
-                                while (getline(responseFile, line)){
-                                    write(clientFD, line.c_str(), sizeof(char)*strlen(line.c_str()));
-                                }
-                                responseFile.close();
-                            }else{
-                                char* res = configureResponse(500, "Internal Server Error", true);
-                                send(clientFD, res, strlen(res), 0);
-                                free(res);
+                        /* Обрабатываем обычный запрос статической страницы  */
+                        string line;
+                        ifstream responseFile(getRequests[pathId].responseFile);
+                        if (responseFile.is_open()){
+                            char* res = configureResponse(200, "OK", false);
+                            write(clientFD, res, sizeof(char)*strlen(res));
+                            free(res);
+                            while (getline(responseFile, line)){
+                                write(clientFD, line.c_str(), sizeof(char)*strlen(line.c_str()));
                             }
+                            responseFile.close();
                         }else{
-                            
-                            /* CGI */
+                            char* res = configureResponse(500, "Internal Server Error", true);
+                            send(clientFD, res, strlen(res), 0);
+                            free(res);
+                        }
+                    }else{
+                        chdir("./cgi-bin");
+                        string f = path;
+                        f = f.substr(1);
+                        ifstream cgi_file(f);
+                        if(cgi_file.good()){
                             int status;
                             string name = to_string(getpid()) + ".txt";
                             int fd = open(name.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
                             dup2(fd, 1);
                             if(!fork()){
                                 chdir("./cgi-bin");
-                                string processName = "./" + getRequests[pathId].responseFile;
-                                execlp(processName.c_str(), getRequests[pathId].responseFile.c_str(), NULL);
+                                string processName = ".";
+                                processName += path;
+                                //execve()
+                                execlp(processName.c_str(), processName.c_str(), NULL);
                                 exit(1);
                             }
                             close(fd);
@@ -215,11 +223,12 @@ Server::Server(int portNum, string logFile){
                                 send(clientFD, res, strlen(res), 0);
                             }
                             remove(name.c_str());
+                        }else{
+                            char* res = configureResponse(404, "Not found!", true);
+                            send(clientFD, res, strlen(res), 0);
+                            free(res);
                         }
-                    }else{
-                        char* res = configureResponse(404, "Not found!", true);
-                        send(clientFD, res, strlen(res), 0);
-                        free(res);
+                        
                     }
                 }else{
                     char* res = configureResponse(501, "Not Implemented", true);
