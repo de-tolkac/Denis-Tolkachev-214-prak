@@ -62,6 +62,10 @@ char* configureResponse(int code, string msg, bool appendMessageToBody){
     return ret;
 }
 
+void printError(string err, int clientResponseCode){
+    cout << "Произошла " << RED << "ошибка: " << RESET << err << " [Ответ: " << YELLOW << clientResponseCode << RESET << "]\n"; 
+}
+
 Server::Server(int portNum, string logFile){
         signal(SIGPIPE, SIG_IGN); //Быстрофикс. TODO - надо разобраться почему прилетает SIGPIPE.  
         log.open(logFile, std::ios_base::out | std::ios_base::app); 
@@ -138,10 +142,22 @@ Server::Server(int portNum, string logFile){
                 if(!strncmp(request, "GET", 3)){
                     int k = 5;
                     bool pathFound = false;
+                    bool reqWithParams = false;
+                    char* params;
                     char c = request[k];
-                    while(c != ' '){
+                    while((c != ' ') && (c != '?')){
                         k++;
                         c = request[k];
+                    }
+                    if(c == '?'){
+                        reqWithParams = true;
+                        int n = k;
+                        while(c != ' '){
+                            n++;
+                            c = request[n];
+                        }
+                        params = (char*)malloc(sizeof(char) * (n - k + 2));
+                        copy(&request[k + 1], &request[n], &params[0]);
                     }
                     char path[k-3];
                     if(k != 5){
@@ -173,6 +189,8 @@ Server::Server(int portNum, string logFile){
                             }
                             responseFile.close();
                         }else{
+                            string err = "Ошибка открытия файла " + getRequests[pathId].responseFile;
+                            printError(err, 500);
                             char* res = configureResponse(500, "Internal Server Error", true);
                             send(clientFD, res, strlen(res), 0);
                             free(res);
@@ -192,7 +210,13 @@ Server::Server(int portNum, string logFile){
                                 string processName = ".";
                                 processName += path;
                                 //execve()
-                                execlp(processName.c_str(), processName.c_str(), NULL);
+                                char **argv = { NULL };
+                                string QUERY_STRING = "QUERY_STRING=";
+                                if(reqWithParams){
+                                    QUERY_STRING +=  params;
+                                }
+                                char *env[] = {(char*)QUERY_STRING.c_str(), NULL};
+                                execve(processName.c_str(), argv, env);
                                 exit(1);
                             }
                             close(fd);
@@ -210,15 +234,21 @@ Server::Server(int portNum, string logFile){
                                         }
                                         responseFile.close();
                                     }else{
+                                        string err = "Ошибка открытия файла " + name;
+                                        printError(err, 500);
                                         char* res = configureResponse(500, "Internal Server Error", true);
                                         send(clientFD, res, strlen(res), 0);
                                         free(res);
                                     }
                                 }else{
+                                    string err = "CGI процесс завершился со статусом " + to_string(WEXITSTATUS(status));
+                                    printError(err, 500);
                                     char* res = configureResponse(500, "Internal Server Error", true);
                                     send(clientFD, res, strlen(res), 0);
                                 }
                             }else if(WIFSIGNALED(status)){
+                                string err = "CGI процесс прислал сигнал " + to_string(WIFSIGNALED(status));
+                                printError(err, 500);
                                 char* res = configureResponse(500, "Internal Server Error", true);
                                 send(clientFD, res, strlen(res), 0);
                             }
@@ -229,6 +259,9 @@ Server::Server(int portNum, string logFile){
                             free(res);
                         }
                         
+                    }
+                    if(reqWithParams){
+                        free(params);
                     }
                 }else{
                     char* res = configureResponse(501, "Not Implemented", true);
