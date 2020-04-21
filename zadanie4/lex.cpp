@@ -39,48 +39,43 @@ public:
 };
 
 class Ident{
-         char       * name;
-         bool         declare;
-         type_of_lex  type;
-         bool         assign;
-         int          value;
+    char       * name;
+    bool         declare;
+    type_of_lex  type;
+    bool         assign;
+    int          value;
 public:
-        Ident() { declare = false; assign = false; }
-        char* get_name () { return name; }
-        void put_name (const char *n){
-            name = new char [ strlen(n)+1];
-            strcpy(name,n);
-        }
-         bool get_declare () { return declare; }
-         void put_declare () { declare = true; }
-         type_of_lex  get_type    () { return type; }
-         void put_type(type_of_lex t) { type = t; }
-         bool get_assign  () { return assign; }
-         void put_assign  (){ assign = true; }
-         int  get_value   () { return value; }
-         void  ut_value   (int v){ value = v; }
+    Ident() { declare = false; assign = false; }
+    char* get_name () { return name; }
+    void put_name (const char *n){
+        name = new char [ strlen(n)+1];
+        strcpy(name,n);
+    }
+    bool get_declare () { return declare; }
+    void put_declare () { declare = true; }
+    type_of_lex  get_type    () { return type; }
+    void put_type(type_of_lex t) { type = t; }
+    bool get_assign  () { return assign; }
+    void put_assign  (){ assign = true; }
+    int  get_value   () { return value; }
+    void  ut_value   (int v){ value = v; }
 };
  
-//////////////////////  Класс Tabl_ident  ///////////////////////
- 
-class Tabl_ident
-{
-         Ident      * p;
-         int          size;
-         int          top;
+class Tabl_ident{
+    Ident* p;
+    int size;
+    int top;
 public:
-                      Tabl_ident ( int max_size )
-                      {
-                        p = new Ident [ size = max_size ];
-                        top = 1;
-                      }
-                     ~Tabl_ident () { delete [] p; }
-         Ident      & operator[] ( int k ) { return p[k]; }
-         int          put ( const char *buf );
+    Tabl_ident ( int max_size ){
+        p = new Ident [ size = max_size ];
+        top = 1;
+    }
+    ~Tabl_ident () { delete [] p; }
+        Ident& operator[] ( int k ) { return p[k]; }
+        int put ( const char *buf );
 };
  
-int Tabl_ident::put ( const char *buf )
-{
+int Tabl_ident::put(const char *buf){
   for ( int j = 1; j < top; j++ )
     if ( !strcmp ( buf, p[j].get_name() ) )
       return j;
@@ -151,7 +146,6 @@ type_of_lex Scanner::words[] = {
     LEX_BREAK, LEX_CONTINUE, LEX_RETURN,
     LEX_NULL
 };
-
 
 char* Scanner::TD[] = {
     (char *)"", (char *)"EOF", (char *)"=", (char *)"==", (char *)"===",
