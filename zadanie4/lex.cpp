@@ -90,7 +90,7 @@ int Tabl_ident::put ( const char *buf )
 }
  
  
-Tabl_ident TID ( 100 );
+Tabl_ident TID(100);
 
 class Scanner{
     enum state {H, IDENT, NUMB, EQ, EXCL, PLUS, MINUS, ALE, AMP, PIPE, ALE2, QUOTES};
@@ -154,7 +154,7 @@ type_of_lex Scanner::words[] = {
 
 
 char* Scanner::TD[] = {
-    (char *)"", (char *)"@", (char *)"=", (char *)"==", (char *)"===",
+    (char *)"", (char *)"EOF", (char *)"=", (char *)"==", (char *)"===",
     (char *)"!", (char *)"!=", (char *)"!==", (char *)"+", (char *)"+=",
     (char *)"++", (char *)"-", (char *)"-=", (char *)"--", (char *)"<",
     (char *)"<=", (char *)">", (char *)">=", (char *)"%", (char *)"%=",
@@ -237,7 +237,7 @@ Lex Scanner::getLex(){
                     clear();
                     gc();
                     CS = QUOTES;
-                }else if(c == '@'){
+                }else if(c == EOF){
                     gc();
                     return Lex(LEX_FIN);
                 }
@@ -360,7 +360,7 @@ Lex Scanner::getLex(){
                 if(c == '"'){
                     gc();
                     return Lex(LEX_STR, 0);
-                }else if(c == '@'){
+                }else if(c == EOF){
                     throw c;
                 }else{
                     add();
