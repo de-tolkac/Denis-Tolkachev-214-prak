@@ -5,17 +5,17 @@
 using namespace std;
 
 enum type_of_lex{
-    LEX_NULL, LEX_FIN, LEX_FUNCTION, LEX_ID, LEX_VAR, LEX_IF, 
-    LEX_ELSE, LEX_WHILE, LEX_FOR, LEX_DO, LEX_IN, LEX_BREAK, 
-    LEX_CONTINUE, LEX_RETURN, LEX_STR, LEX_NUM, LEX_SEMICOLON, 
-    LEX_EQUAL, LEX_DOUBLEEQUAL, LEX_TRIPPLEEQUAL, LEX_LSBRACKET, 
-    LEX_RSBRACKET, LEX_LRBRACKET, LEX_RRBRACKET, LEX_PLUS, LEX_MINUS, 
-    LEX_MULTIPLY, LEX_SLASH, LEX_PERCENT, LEX_INC, LEX_DEC, LEX_NOT, 
-    LEX_OR, LEX_AND, LEX_NOTEQUAL, LEX_LESS, LEX_MORE, LEX_LOGICEQUAL, 
-    LEX_LESSEQ, LEX_MOREEQ, LEX_TRUE, LEX_FALSE, LEX_UNDEFINED, LEX_COMA,
-    LEX_EXCL, LEX_EXCLEQ, LEX_EXCLBOUBLEEQ, LEX_PLUSEQ, LEX_MINUSEQ,
-    LEX_PERCENTEQ, LEX_MULTIPLYEQ, LEX_AMP, LEX_DOUBLEAMP, LEX_PIPE,
-    LEX_DOUBLEPIPE
+    LEX_NULL, LEX_FIN, LEX_FUNCTION, LEX_ID, LEX_VAR, LEX_IF, //0 - 5
+    LEX_ELSE, LEX_WHILE, LEX_FOR, LEX_DO, LEX_IN, LEX_BREAK, //6 - 11
+    LEX_CONTINUE, LEX_RETURN, LEX_STR, LEX_NUM, LEX_SEMICOLON, //12 - 16
+    LEX_EQUAL, LEX_DOUBLEEQUAL, LEX_TRIPPLEEQUAL, LEX_LSBRACKET, //17 - 20
+    LEX_RSBRACKET, LEX_LRBRACKET, LEX_RRBRACKET, LEX_PLUS, LEX_MINUS, //21 - 25
+    LEX_MULTIPLY, LEX_SLASH, LEX_PERCENT, LEX_INC, LEX_DEC, LEX_NOT, //26 - 31
+    LEX_OR, LEX_AND, LEX_NOTEQUAL, LEX_LESS, LEX_MORE, LEX_LOGICEQUAL, //32 - 37
+    LEX_LESSEQ, LEX_MOREEQ, LEX_TRUE, LEX_FALSE, LEX_UNDEFINED, LEX_COMA, //38 - 43
+    LEX_EXCL, LEX_EXCLEQ, LEX_EXCLBOUBLEEQ, LEX_PLUSEQ, LEX_MINUSEQ, //44 - 48
+    LEX_PERCENTEQ, LEX_MULTIPLYEQ, LEX_AMP, LEX_DOUBLEAMP, LEX_PIPE, //49 - 53
+    LEX_DOUBLEPIPE //54
 };
 
 class Lex{
@@ -137,106 +137,41 @@ public:
 };
 
 char* Scanner::TW[] = {
-    (char *)"",
-    (char *)"function",
-    (char *)"var",
-    (char *)"if",
-    (char *)"else",
-    (char *)"while",
-    (char *)"for",
-    (char *)"do",
-    (char *)"in",
-    (char *)"break",
-    (char *)"continue",
-    (char *)"return",
+    (char *)"", (char *)"function", (char *)"var",
+    (char *)"if", (char *)"else", (char *)"while",
+    (char *)"for", (char *)"do", (char *)"in",
+    (char *)"break", (char *)"continue", (char *)"return",
     NULL
 };
 
 type_of_lex Scanner::words[] = {
-    LEX_NULL,
-    LEX_FUNCTION,
-    LEX_VAR,
-    LEX_IF,
-    LEX_ELSE,
-    LEX_WHILE,
-    LEX_FOR,
-    LEX_DO,
-    LEX_IN,
-    LEX_BREAK,
-    LEX_CONTINUE,
-    LEX_RETURN,
+    LEX_NULL, LEX_FUNCTION, LEX_VAR,
+    LEX_IF, LEX_ELSE, LEX_WHILE,
+    LEX_FOR, LEX_DO, LEX_IN,
+    LEX_BREAK, LEX_CONTINUE, LEX_RETURN,
     LEX_NULL
 };
 
 
 char* Scanner::TD[] = {
-    (char *)"",
-    (char *)"@",
-    (char *)"=",
-    (char *)"==",
-    (char *)"===",
-    (char *)"!",
-    (char *)"!=",
-    (char *)"!==",
-    (char *)"+",
-    (char *)"+=",
-    (char *)"++",
-    (char *)"-",
-    (char *)"-=",
-    (char *)"--",
-    (char *)"<",
-    (char *)"<=",
-    (char *)">",
-    (char *)">=",
-    (char *)"%",
-    (char *)"%=",
-    (char *)"*",
-    (char *)"*=",
-    (char *)"&",
-    (char *)"&&",
-    (char *)"|",
-    (char *)"||",
-    (char *)"[",
-    (char *)"]",
-    (char *)"(",
-    (char *)")",
-    (char *)";",
+    (char *)"", (char *)"@", (char *)"=", (char *)"==", (char *)"===",
+    (char *)"!", (char *)"!=", (char *)"!==", (char *)"+", (char *)"+=",
+    (char *)"++", (char *)"-", (char *)"-=", (char *)"--", (char *)"<",
+    (char *)"<=", (char *)">", (char *)">=", (char *)"%", (char *)"%=",
+    (char *)"*", (char *)"*=", (char *)"&", (char *)"&&", (char *)"|",
+    (char *)"||", (char *)"[", (char *)"]", (char *)"(", (char *)")", 
+    (char*)",", (char *)";",
     NULL
 };
 
 type_of_lex Scanner::dlms[] = {
-    LEX_NULL,
-    LEX_FIN,
-    LEX_EQUAL,
-    LEX_DOUBLEEQUAL,
-    LEX_TRIPPLEEQUAL,
-    LEX_EXCL,
-    LEX_EXCLEQ,
-    LEX_EXCLBOUBLEEQ,
-    LEX_PLUS,
-    LEX_PLUSEQ,
-    LEX_INC,
-    LEX_MINUS,
-    LEX_MINUSEQ,
-    LEX_DEC,
-    LEX_LESS,
-    LEX_LESSEQ,
-    LEX_MORE,
-    LEX_MOREEQ,
-    LEX_PERCENT,
-    LEX_PERCENTEQ,
-    LEX_MULTIPLY,
-    LEX_MULTIPLYEQ,
-    LEX_AMP,
-    LEX_DOUBLEAMP,
-    LEX_PIPE,
-    LEX_DOUBLEPIPE,
-    LEX_LSBRACKET,
-    LEX_RSBRACKET,
-    LEX_LRBRACKET,
-    LEX_RRBRACKET,
-    LEX_COMA,
-    LEX_SEMICOLON,
+    LEX_NULL, LEX_FIN, LEX_EQUAL, LEX_DOUBLEEQUAL, LEX_TRIPPLEEQUAL,
+    LEX_EXCL, LEX_EXCLEQ, LEX_EXCLBOUBLEEQ, LEX_PLUS, LEX_PLUSEQ,
+    LEX_INC, LEX_MINUS, LEX_MINUSEQ, LEX_DEC, LEX_LESS, 
+    LEX_LESSEQ, LEX_MORE, LEX_MOREEQ, LEX_PERCENT, LEX_PERCENTEQ, 
+    LEX_MULTIPLY, LEX_MULTIPLYEQ, LEX_AMP, LEX_DOUBLEAMP, LEX_PIPE, 
+    LEX_DOUBLEPIPE,  LEX_LSBRACKET, LEX_RSBRACKET, LEX_LRBRACKET, LEX_RRBRACKET, 
+    LEX_COMA, LEX_SEMICOLON,
     LEX_NULL
 };
 
