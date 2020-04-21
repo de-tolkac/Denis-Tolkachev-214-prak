@@ -1,6 +1,7 @@
 #include <string.h>
 #include <iostream>
 #include <stdlib.h>
+#include <vector>
 
 using namespace std;
 
@@ -168,6 +169,8 @@ type_of_lex Scanner::dlms[] = {
     LEX_COMA, LEX_SEMICOLON,
     LEX_NULL
 };
+
+vector<char*> LSA; //Lex Str Arr
 
 Lex Scanner::getLex(){
     int d, j;
@@ -353,7 +356,8 @@ Lex Scanner::getLex(){
             case QUOTES:
                 if(c == '"'){
                     gc();
-                    return Lex(LEX_STR, 0);
+                    LSA.push_back(buf);
+                    return Lex(LEX_STR, (int)LSA.size() - 1);
                 }else if(c == EOF){
                     throw c;
                 }else{
