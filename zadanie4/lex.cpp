@@ -23,7 +23,7 @@ class Lex{
     int value;
 public:
     Lex(type_of_lex t = LEX_NULL, int v = 0){
-        type = type;
+        type = t;
         value = v;
     }
     type_of_lex GetType(){
@@ -93,7 +93,7 @@ int Tabl_ident::put ( const char *buf )
 Tabl_ident TID ( 100 );
 
 class Scanner{
-    enum state {H, IDENT, NUMB, EQ, EXCL, PLUS, MINUS, ALE, AMP, PIPE, ALE2, QUOTES, FIN};
+    enum state {H, IDENT, NUMB, EQ, EXCL, PLUS, MINUS, ALE, AMP, PIPE, ALE2, QUOTES};
     static type_of_lex dlms[];
     static char* TD[];
     static type_of_lex words[];
@@ -137,18 +137,18 @@ public:
 };
 
 char* Scanner::TW[] = {
-    "",
-    "function",
-    "var",
-    "if",
-    "else",
-    "while",
-    "for",
-    "do",
-    "in",
-    "break",
-    "continue",
-    "return",
+    (char *)"",
+    (char *)"function",
+    (char *)"var",
+    (char *)"if",
+    (char *)"else",
+    (char *)"while",
+    (char *)"for",
+    (char *)"do",
+    (char *)"in",
+    (char *)"break",
+    (char *)"continue",
+    (char *)"return",
     NULL
 };
 
@@ -170,37 +170,37 @@ type_of_lex Scanner::words[] = {
 
 
 char* Scanner::TD[] = {
-    "",
-    "@",
-    "=",
-    "==",
-    "===",
-    "!",
-    "!=",
-    "!==",
-    "+",
-    "+=",
-    "++",
-    "-",
-    "-=",
-    "--",
-    "<",
-    "<=",
-    ">",
-    ">=",
-    "%",
-    "%=",
-    "*",
-    "*=",
-    "&",
-    "&&",
-    "|",
-    "||",
-    "[",
-    "]",
-    "(",
-    ")",
-    ";",
+    (char *)"",
+    (char *)"@",
+    (char *)"=",
+    (char *)"==",
+    (char *)"===",
+    (char *)"!",
+    (char *)"!=",
+    (char *)"!==",
+    (char *)"+",
+    (char *)"+=",
+    (char *)"++",
+    (char *)"-",
+    (char *)"-=",
+    (char *)"--",
+    (char *)"<",
+    (char *)"<=",
+    (char *)">",
+    (char *)">=",
+    (char *)"%",
+    (char *)"%=",
+    (char *)"*",
+    (char *)"*=",
+    (char *)"&",
+    (char *)"&&",
+    (char *)"|",
+    (char *)"||",
+    (char *)"[",
+    (char *)"]",
+    (char *)"(",
+    (char *)")",
+    (char *)";",
     NULL
 };
 
