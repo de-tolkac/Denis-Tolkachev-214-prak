@@ -16,7 +16,7 @@ enum type_of_lex{
     LEX_LESSEQ, LEX_MOREEQ, LEX_TRUE, LEX_FALSE, LEX_UNDEFINED, LEX_COMA, //38 - 43
     LEX_EXCL, LEX_EXCLEQ, LEX_EXCLBOUBLEEQ, LEX_PLUSEQ, LEX_MINUSEQ, //44 - 48
     LEX_PERCENTEQ, LEX_MULTIPLYEQ, LEX_AMP, LEX_DOUBLEAMP, LEX_PIPE, //49 - 53
-    LEX_DOUBLEPIPE //54
+    LEX_DOUBLEPIPE//54
 };
 
 class Lex{
@@ -89,7 +89,7 @@ int Tabl_ident::put(const char *buf){
 Tabl_ident TID(100);
 
 class Scanner{
-    enum state {H, IDENT, NUMB, EQ, EXCL, PLUS, MINUS, ALE, AMP, PIPE, ALE2, QUOTES};
+    enum state {H, IDENT, NUMB, EQ, EXCL, PLUS, MINUS, ALE, AMP, PIPE, ALE2, QUOTES, COMMENT};
     static type_of_lex dlms[];
     static char* TD[];
     static type_of_lex words[];
@@ -190,6 +190,9 @@ Lex Scanner::getLex(){
                     d = c - '0';
                     gc();
                     CS = NUMB;
+                }else if(c == '#'){
+                    gc();
+                    CS = COMMENT;
                 }else if(c == '='){
                     clear();
                     add();
@@ -235,7 +238,6 @@ Lex Scanner::getLex(){
                     gc();
                     CS = QUOTES;
                 }else if(c == EOF){
-                    gc();
                     return Lex(LEX_FIN);
                 }
                 break;
@@ -364,6 +366,12 @@ Lex Scanner::getLex(){
                     add();
                     gc();
                 }
+                break;
+            case COMMENT:
+                while(c != '\n' && c != EOF){
+                    gc();
+                }
+                CS = H;
                 break;
         }
     }while(true);
