@@ -10,7 +10,7 @@ EMPTYOP -> ;
 BLOCK -> OP BLOCK | eps
 IFOP -> if(LEX_EXPR){ OP } D
 D -> else { OP } | eps
-CYCLEOP -> while(LEX_EXPR){ OP } | do { OP } while(LEX_EXPR); | for(FORPARAMS){block}
+CYCLEOP -> while(LEX_EXPR){ BLOCK } | do { BLOCK } while(LEX_EXPR); | for(FORPARAMS){BLOCK}
 FORPARAMS -> EXPR ; EXPR ; EXPR | var LEX_ID in LEX_EXPR | LEX_ID in LEX_EXPR
 EXPR -> LEX_EXPR | eps
 GOTOOP -> break; | continue; | return EXPR;

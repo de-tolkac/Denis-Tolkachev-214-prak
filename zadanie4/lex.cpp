@@ -419,7 +419,7 @@ public:
             if(lex_type != LEX_FIN){
                 throw curr_lex;
             }
-            cout << "SUCCESS !!!" << endl;
+            cout << "No errors found!" << endl;
         }catch(Lex l){
             cout << "Eror with lexeme: " << l << endl;
         }
@@ -437,7 +437,7 @@ void Parser::S(){
         OP();
         S();
     }else if(lex_type != LEX_FIN){
-        throw "expected function or operator definition";
+        throw "expected function or operator or variable definition";
     }
 }
 
@@ -449,13 +449,15 @@ void Parser::FUNC(){
             if(lex_type == LEX_LRBRACKET){
                 gl();
                 FUNCPARAMS();
-                if(lex_type == LEX_LFBRACKET){
+                if(lex_type == LEX_RRBRACKET){
                     gl();
-                    if(lex_type == LEX_LSBRACKET){
+                    if(lex_type == LEX_LFBRACKET){
                         gl();
                         BLOCK();
                         if(lex_type != LEX_RFBRACKET){
                             throw "expected '}'1";
+                        }else{
+                            gl();
                         }
                     }else{
                         throw "expected '{'";
@@ -624,7 +626,7 @@ void Parser::CYCLEOP(){
                 gl();
                 if(lex_type == LEX_LFBRACKET){
                     gl();
-                    OP();
+                    BLOCK();
                     if(lex_type != LEX_RFBRACKET){
                         throw "expected '}'4";
                     }else{
@@ -643,7 +645,7 @@ void Parser::CYCLEOP(){
         gl();
         if(lex_type == LEX_LFBRACKET){
             gl();
-            OP();
+            BLOCK();
             if(lex_type == LEX_RFBRACKET){
                 gl();
                 if(lex_type == LEX_WHILE){
@@ -740,6 +742,26 @@ void Parser::FORPARAMS(){
                 }else{
                     throw "expected ';'";
                 }
+            }else if(lex_type == LEX_EQUAL){
+                gl();
+                if(lex_type == LEX_ID || lex_type == LEX_STR || lex_type == LEX_NUM){
+                    gl();
+                    if(lex_type == LEX_SEMICOLON){
+                        gl();
+                        EXPR();
+                        if(lex_type == LEX_SEMICOLON){
+                            gl();
+                            EXPR();
+                            gl();
+                        }else{
+                            throw "expected ';'";
+                        }
+                    }else{
+                        throw "expected ';'";
+                    }
+                }else{
+                    throw "expected name or string or number";
+                }
             }else{
                 throw "expected ';'";
             }
@@ -808,7 +830,7 @@ void Parser::LEX_EXPR(){
                 if(lex_type == LEX_ID || lex_type == LEX_NUM | lex_type == LEX_STR){
                     gl();
                 }else{
-                    throw "expected name or number";
+                    throw "expected name or number or string";
                 }
         }else if(lex_type == LEX_EQUAL){
             gl();
@@ -819,7 +841,7 @@ void Parser::LEX_EXPR(){
                         if(lex_type == LEX_ID || lex_type == LEX_NUM | lex_type == LEX_STR){
                             gl();
                         }else{
-                            throw "expected name or number";
+                            throw "expected name or number or string";
                         }
                 }
             }else{
@@ -844,7 +866,7 @@ int main(){
         Parser test;
         test.analyze();
     }catch(char const *err){
-        cout << err << "on line: " << line << endl;
+        cout << err << " on line: " << line << endl;
     }
     return 0;
 }
