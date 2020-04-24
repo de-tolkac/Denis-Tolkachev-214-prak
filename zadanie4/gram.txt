@@ -1,0 +1,19 @@
+S -> FUNC | OP
+FUNC -> function LEX_ID (FUNCPARAMS){ BLOCK }
+FUNCPARAMS -> LEX_ID M | eps
+M -> , LEX_ID M | eps
+OP -> VALDEF |  EMPTYOP | BLOCK | IFOP | CYCLEOP | GOTOOP | LEX_EXPR
+VALDEF -> var LEX_ID L;
+L -> =LEX_EXPR F | eps
+F -> , LEX_ID L | eps
+EMPTYOP -> ;
+BLOCK -> OP BLOCK | eps
+IFOP -> if(LEX_EXPR){ OP } D
+D -> else { OP } | eps
+CYCLEOP -> while(LEX_EXPR){ OP } | do { OP } while(LEX_EXPR); | for(FORPARAMS){block}
+FORPARAMS -> EXPR ; EXPR ; EXPR | var LEX_ID in LEX_EXPR | LEX_ID in LEX_EXPR
+EXPR -> LEX_EXPR | eps
+GOTOOP -> break; | continue; | return EXPR;
+LEX_EXPR -> LEX_ID [+|-|>|<|>=|<=|%|/] LEX_ID | LEX_ID | LEX_NUM [...] LEX_NUM | LEX_NUM | LEX_ID [..] LEX_NUM | LEX_NUM [..] LEX_ID
+LEX_EXPR -> EXPRESSION [+|-|>|<|>=|<=|%|/] EXPRESSION | EXPRESSION | LEX_ID = LEX_EXPR | LEX_ID [+=|-=|/=|%=] EXPRESSION
+EXPRESSION -> LEX_ID | LEX_STR | LEX_NUM
