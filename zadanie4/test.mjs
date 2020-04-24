@@ -13,3 +13,7 @@ while(1){
         c += i;
     }
 }
+do{
+    var t = 1;
+    t += 1;
+}while(i > t);

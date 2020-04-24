@@ -14,6 +14,5 @@ CYCLEOP -> while(LEX_EXPR){ BLOCK } | do { BLOCK } while(LEX_EXPR); | for(FORPAR
 FORPARAMS -> EXPR ; EXPR ; EXPR | var LEX_ID in LEX_EXPR | LEX_ID in LEX_EXPR
 EXPR -> LEX_EXPR | eps
 GOTOOP -> break; | continue; | return EXPR;
-LEX_EXPR -> LEX_ID [+|-|>|<|>=|<=|%|/] LEX_ID | LEX_ID | LEX_NUM [...] LEX_NUM | LEX_NUM | LEX_ID [..] LEX_NUM | LEX_NUM [..] LEX_ID
 LEX_EXPR -> EXPRESSION [+|-|>|<|>=|<=|%|/] EXPRESSION | EXPRESSION | LEX_ID = LEX_EXPR | LEX_ID [+=|-=|/=|%=] EXPRESSION
 EXPRESSION -> LEX_ID | LEX_STR | LEX_NUM
