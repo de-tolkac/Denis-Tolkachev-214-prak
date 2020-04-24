@@ -7,7 +7,7 @@ for(var e in arr){
     s += e;
     var str3 = str1 + str2;
 }
-var i;
+var i = 100, f;
 while(1){
     for(i = 0; i < 10; i++){
         c += i;
