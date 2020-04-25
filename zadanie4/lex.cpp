@@ -394,7 +394,7 @@ class Parser{
         curr_lex = scan.getLex();
         lex_type = curr_lex.GetType();
         lex_val = curr_lex.GetValue();
-        cout << curr_lex << endl;
+        //cout << curr_lex << endl;
     }
     void S(); //done
     void FUNC(); //done
@@ -433,7 +433,7 @@ public:
 };
 
 void Parser::S(){
-    cout << "S\n";
+    //cout << "S\n";
     if(lex_type == LEX_FUNCTION){
         FUNC();
         S();
@@ -449,7 +449,7 @@ void Parser::S(){
 }
 
 void Parser::FUNC(){
-    cout << "FUNC\n";
+    //cout << "FUNC\n";
     if(lex_type == LEX_FUNCTION){
         gl();
         if(lex_type == LEX_ID){
@@ -475,7 +475,7 @@ void Parser::FUNC(){
 }
 
 void Parser::OP(){
-    cout << "OP\n";
+    //cout << "OP\n";
     if(lex_type == LEX_VAR){
         VALDEF();
     }else if(lex_type == LEX_SEMICOLON){
@@ -496,7 +496,7 @@ void Parser::OP(){
 }
 
 void Parser::FUNCPARAMS(){
-    cout << "FUNCPARAMS\n";
+    //cout << "FUNCPARAMS\n";
     if(lex_type == LEX_ID){
         gl();
         M();   
@@ -504,7 +504,7 @@ void Parser::FUNCPARAMS(){
 }
 
 void Parser::M(){
-    cout << "M\n";
+    //cout << "M\n";
     if(lex_type == LEX_COMA){
         gl();
         if(lex_type == LEX_ID){
@@ -517,7 +517,7 @@ void Parser::M(){
 }
 
 void Parser::VALDEF(){
-    cout << "VALDEF\n";
+    //cout << "VALDEF\n";
     if(lex_type == LEX_VAR){
         gl();
         if(lex_type == LEX_ID){
@@ -537,7 +537,7 @@ void Parser::VALDEF(){
 }
 
 void Parser::L(){
-    cout << "L\n";
+    //cout << "L\n";
     if(lex_type == LEX_EQUAL){
         gl();
         EXPRESSION();
@@ -546,7 +546,7 @@ void Parser::L(){
 }
 
 void Parser::F(){
-    cout << "F\n";
+    //cout << "F\n";
     if(lex_type == LEX_COMA){
         gl();
         if(lex_type == LEX_ID){
@@ -559,7 +559,7 @@ void Parser::F(){
 }
 
 void Parser::EMPTYOP(){
-    cout << "EMPTYOP\n";
+    //cout << "EMPTYOP\n";
     if(lex_type != LEX_SEMICOLON){
         throw "expected ';'";
     }else{
@@ -568,7 +568,7 @@ void Parser::EMPTYOP(){
 }
 
 void Parser::BLOCK(){
-    cout << "BLOCK\n";
+    //cout << "BLOCK\n";
     if(lex_type == LEX_LFBRACKET){
         gl();
         while(lex_type != LEX_RFBRACKET){
@@ -581,7 +581,7 @@ void Parser::BLOCK(){
 }
 
 void Parser::IFOP(){
-    cout << "IFOP\n";
+    //cout << "IFOP\n";
     if(lex_type == LEX_IF){
         gl();
         if(lex_type == LEX_LRBRACKET){
@@ -603,7 +603,7 @@ void Parser::IFOP(){
 }
 
 void Parser::D(){
-    cout << "D\n";
+    //cout << "D\n";
     if(lex_type == LEX_ELSE){
        gl();
        OP();
@@ -611,7 +611,7 @@ void Parser::D(){
 }
 
 void Parser::CYCLEOP(){
-    cout << "CYCLEOP\n";
+    //cout << "CYCLEOP\n";
     if(lex_type == LEX_WHILE){
         gl();
         if(lex_type == LEX_LRBRACKET){
@@ -671,7 +671,7 @@ void Parser::CYCLEOP(){
 
 
 void Parser::FORPARAMS(){
-    cout << "FORPARAMS\n";
+    //cout << "FORPARAMS\n";
     if(lex_type == LEX_VAR){
         gl();
         if(lex_type == LEX_ID){
@@ -761,14 +761,14 @@ void Parser::FORPARAMS(){
 }
 
 void Parser::EXPR(){
-    cout << "EXPR\n";
+    //cout << "EXPR\n";
     if(lex_type == LEX_ID){
         EXPRESSION();
     }
 }
 
 void Parser::GOTOOP(){
-    cout << "GOTOOP\n";
+    //cout << "GOTOOP\n";
     if((lex_type == LEX_BREAK) || (lex_type == LEX_CONTINUE)){
         gl();
         if(lex_type == LEX_SEMICOLON){
@@ -790,7 +790,7 @@ void Parser::GOTOOP(){
 }
 
 void Parser::EXPRESSION(){
-    cout << "EXPRESSION\n";
+    //cout << "EXPRESSION\n";
     E1();
     if((lex_type == LEX_EQUAL) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE) || (lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_NOTEQUAL) || (lex_type == LEX_PLUSEQ) || (lex_type == LEX_MINUSEQ) || (lex_type == LEX_MULTIPLYEQ) || (lex_type == LEX_SLASHEQ) || (lex_type == LEX_PERCENTEQ)){
         gl();
@@ -799,7 +799,7 @@ void Parser::EXPRESSION(){
 }
 
 void Parser::E1(){
-    cout << "E1\n";
+    //cout << "E1\n";
     T();
     while((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_OR)){
         gl();
@@ -808,7 +808,7 @@ void Parser::E1(){
 }
 
 void Parser::T(){
-    cout << "T\n";
+    //cout << "T\n";
     K();
     while((lex_type == LEX_DOT) || (lex_type == LEX_MULTIPLY) || (lex_type == LEX_SLASH) || (lex_type == LEX_AND)){
         if(lex_type == LEX_DOT){
@@ -842,7 +842,7 @@ void Parser::T(){
 }
 
 void Parser::K(){
-    cout << "K\n";
+    //cout << "K\n";
     if(lex_type == LEX_ID){
         gl();
     }else if(lex_type == LEX_NUM){
@@ -872,7 +872,11 @@ int main(){
         Parser test;
         test.analyze();
     }catch(char const *err){
-        cout << err << " on line: " << line << endl;
+        if(!strcmp(err, "expected ';'\0")){
+            cout << err << " on line: " << line - 1 << endl;
+        }else{
+            cout << err << " on line: " << line << endl;
+        }
     }
     return 0;
 }
