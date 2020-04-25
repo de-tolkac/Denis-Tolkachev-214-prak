@@ -430,10 +430,10 @@ void Parser::S(){
     if(lex_type == LEX_FUNCTION){
         FUNC();
         S();
-    }else if(lex_type == LEX_VAR || lex_type == LEX_SEMICOLON || lex_type == LEX_IF 
-        || lex_type == LEX_WHILE || lex_type == LEX_FOR || lex_type == LEX_DO 
-        || lex_type == LEX_BREAK || lex_type == LEX_CONTINUE || lex_type == LEX_RETURN
-        || lex_type == LEX_ID ){
+    }else if((lex_type == LEX_VAR) || (lex_type == LEX_SEMICOLON) || (lex_type == LEX_IF) 
+        || (lex_type == LEX_WHILE) || (lex_type == LEX_FOR) || (lex_type == LEX_DO) 
+        || (lex_type == LEX_BREAK) || (lex_type == LEX_CONTINUE) || (lex_type == LEX_RETURN)
+        || (lex_type == LEX_ID) ){
         OP();
         S();
     }else if(lex_type != LEX_FIN){
@@ -483,9 +483,9 @@ void Parser::OP(){
         EMPTYOP();
     }else if(lex_type == LEX_IF){
         IFOP();
-    }else if(lex_type == LEX_WHILE || lex_type == LEX_FOR || lex_type == LEX_DO){
+    }else if((lex_type == LEX_WHILE) || (lex_type == LEX_FOR) || (lex_type == LEX_DO)){
         CYCLEOP();
-    }else if(lex_type == LEX_BREAK || lex_type == LEX_CONTINUE || lex_type == LEX_RETURN){
+    }else if((lex_type == LEX_BREAK) || (lex_type == LEX_CONTINUE) || (lex_type == LEX_RETURN)){
         GOTOOP();
     }else if(lex_type == LEX_ID){
         LEX_EXPR();
@@ -561,10 +561,10 @@ void Parser::EMPTYOP(){
 }
 
 void Parser::BLOCK(){
-    if(lex_type == LEX_VAR || lex_type == LEX_SEMICOLON || lex_type == LEX_IF 
-        || lex_type == LEX_WHILE || lex_type == LEX_FOR || lex_type == LEX_DO 
-        || lex_type == LEX_BREAK || lex_type == LEX_CONTINUE || lex_type == LEX_RETURN
-        || lex_type == LEX_ID ){
+    if((lex_type == LEX_VAR) || (lex_type == LEX_SEMICOLON) || (lex_type == LEX_IF) 
+        || (lex_type == LEX_WHILE) || (lex_type == LEX_FOR) || (lex_type == LEX_DO) 
+        || (lex_type == LEX_BREAK) || (lex_type == LEX_CONTINUE) || (lex_type == LEX_RETURN)
+        || (lex_type == LEX_ID) ){
         OP();
         BLOCK();
     }
@@ -725,8 +725,8 @@ void Parser::FORPARAMS(){
             gl();
             LEX_EXPR();
         }else{
-            if(lex_type == LEX_PLUS || lex_type == LEX_MINUS || lex_type == LEX_LESS || lex_type == LEX_MORE
-            ||lex_type == LEX_LESSEQ || lex_type == LEX_MOREEQ || lex_type == LEX_PERCENT || lex_type == LEX_SLASH){
+            if((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE)
+            ||(lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_PERCENT) || (lex_type == LEX_SLASH)){
                 gl();
                 if(lex_type == LEX_ID || lex_type == LEX_NUM){
                     gl();
@@ -801,7 +801,7 @@ void Parser::EXPR(){
 }
 
 void Parser::GOTOOP(){
-    if(lex_type == LEX_BREAK || LEX_CONTINUE){
+    if((lex_type == LEX_BREAK) || (lex_type == LEX_CONTINUE)){
         gl();
         if(lex_type == LEX_SEMICOLON){
             gl();
@@ -822,23 +822,23 @@ void Parser::GOTOOP(){
 }
 
 void Parser::LEX_EXPR(){
-    if(lex_type == LEX_ID || lex_type == LEX_NUM || lex_type == LEX_STR){
+    if((lex_type == LEX_ID) || (lex_type == LEX_NUM) || (lex_type == LEX_STR)){
         gl();
-        if(lex_type == LEX_PLUS || lex_type == LEX_MINUS || lex_type == LEX_LESS || lex_type == LEX_MORE
-            ||lex_type == LEX_LESSEQ || lex_type == LEX_MOREEQ || lex_type == LEX_PERCENT || lex_type == LEX_SLASH){
+        if((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE)
+            ||(lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_PERCENT) || (lex_type == LEX_SLASH)){
                 gl();
-                if(lex_type == LEX_ID || lex_type == LEX_NUM | lex_type == LEX_STR){
+                if((lex_type == LEX_ID) || (lex_type == LEX_NUM) | (lex_type == LEX_STR)){
                     gl();
                 }else{
                     throw "expected name or number or string";
                 }
         }else if(lex_type == LEX_EQUAL){
             gl();
-            if(lex_type == LEX_ID || lex_type == LEX_NUM || lex_type == LEX_STR){
-                if(lex_type == LEX_PLUS || lex_type == LEX_MINUS || lex_type == LEX_LESS || lex_type == LEX_MORE
-                    ||lex_type == LEX_LESSEQ || lex_type == LEX_MOREEQ || lex_type == LEX_PERCENT || lex_type == LEX_SLASH){
+            if((lex_type == LEX_ID) || (lex_type == LEX_NUM) || (lex_type == LEX_STR)){
+                if((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE)
+                    ||(lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_PERCENT) || (lex_type == LEX_SLASH)){
                         gl();
-                        if(lex_type == LEX_ID || lex_type == LEX_NUM | lex_type == LEX_STR){
+                        if((lex_type == LEX_ID) || (lex_type == LEX_NUM) | (lex_type == LEX_STR)){
                             gl();
                         }else{
                             throw "expected name or number or string";
@@ -848,9 +848,9 @@ void Parser::LEX_EXPR(){
                 throw "expected name or number or string"; 
             }
 
-        }else if(lex_type == LEX_PLUSEQ || lex_type == LEX_MINUSEQ || lex_type == LEX_PERCENTEQ){
+        }else if((lex_type == LEX_PLUSEQ) || (lex_type == LEX_MINUSEQ) || (lex_type == LEX_PERCENTEQ)){
             gl();
-            if(lex_type == LEX_ID || lex_type == LEX_STR || lex_type == LEX_NUM){
+            if((lex_type == LEX_ID) || (lex_type == LEX_STR) || (lex_type == LEX_NUM)){
                 gl();
             }else{
                throw "expected name or number or string";
