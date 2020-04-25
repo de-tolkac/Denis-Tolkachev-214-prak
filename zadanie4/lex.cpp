@@ -17,8 +17,8 @@ enum type_of_lex{
     LEX_OR, LEX_AND, LEX_NOTEQUAL, LEX_LESS, LEX_MORE, LEX_LOGICEQUAL, //32 - 37
     LEX_LESSEQ, LEX_MOREEQ, LEX_TRUE, LEX_FALSE, LEX_UNDEFINED, LEX_COMA, //38 - 43
     LEX_EXCL, LEX_EXCLEQ, LEX_EXCLBOUBLEEQ, LEX_PLUSEQ, LEX_MINUSEQ, //44 - 48
-    LEX_PERCENTEQ, LEX_MULTIPLYEQ, LEX_AMP, LEX_DOUBLEAMP, LEX_PIPE, //49 - 53
-    LEX_DOUBLEPIPE, LEX_LFBRACKET, LEX_RFBRACKET//54 - 56
+    LEX_PERCENTEQ, LEX_MULTIPLYEQ, LEX_AMP, LEX_PIPE, LEX_LFBRACKET,//49 - 53
+    LEX_RFBRACKET, LEX_DOT, LEX_SLASHEQ//54 - 56
 };
 
 
@@ -159,7 +159,8 @@ char* Scanner::TD[] = {
     (char *)"<=", (char *)">", (char *)">=", (char *)"%", (char *)"%=",
     (char *)"*", (char *)"*=", (char *)"&", (char *)"&&", (char *)"|",
     (char *)"||", (char *)"[", (char *)"]", (char *)"(", (char *)")", 
-    (char*)",", (char *)";", (char *)"{", (char *)"}",
+    (char*)",", (char *)";", (char *)"{", (char *)"}", (char*)".",
+    (char *)"/", (char *)"/=",
     NULL
 };
 
@@ -168,9 +169,10 @@ type_of_lex Scanner::dlms[] = {
     LEX_EXCL, LEX_EXCLEQ, LEX_EXCLBOUBLEEQ, LEX_PLUS, LEX_PLUSEQ,
     LEX_INC, LEX_MINUS, LEX_MINUSEQ, LEX_DEC, LEX_LESS, 
     LEX_LESSEQ, LEX_MORE, LEX_MOREEQ, LEX_PERCENT, LEX_PERCENTEQ, 
-    LEX_MULTIPLY, LEX_MULTIPLYEQ, LEX_AMP, LEX_DOUBLEAMP, LEX_PIPE, 
-    LEX_DOUBLEPIPE,  LEX_LSBRACKET, LEX_RSBRACKET, LEX_LRBRACKET, LEX_RRBRACKET, 
-    LEX_COMA, LEX_SEMICOLON, LEX_LFBRACKET, LEX_RFBRACKET,
+    LEX_MULTIPLY, LEX_MULTIPLYEQ, LEX_AMP, LEX_AND, LEX_PIPE, 
+    LEX_OR,  LEX_LSBRACKET, LEX_RSBRACKET, LEX_LRBRACKET, LEX_RRBRACKET, 
+    LEX_COMA, LEX_SEMICOLON, LEX_LFBRACKET, LEX_RFBRACKET, LEX_DOT,
+    LEX_SLASH, LEX_SLASHEQ,
     LEX_NULL
 };
 
@@ -220,7 +222,7 @@ Lex Scanner::getLex(){
                     add();
                     gc();
                     CS = MINUS;
-                }else if(c == '<' || c == '>' || c == '%' || c == '*'){
+                }else if(c == '<' || c == '>' || c == '%' || c == '*' || c == '/'){
                     clear();
                     add();
                     gc();
@@ -235,7 +237,7 @@ Lex Scanner::getLex(){
                     add();
                     gc();
                     CS = PIPE;
-                }else if(c == '[' || c == ']' || c == '(' || c == ')' || c == ',' || c == ';' || c == '{' || c == '}'){
+                }else if(c == '[' || c == ']' || c == '(' || c == ')' || c == ',' || c == ';' || c == '{' || c == '}' || c == '.'){
                     clear();
                     add();
                     gc();
@@ -392,6 +394,7 @@ class Parser{
         curr_lex = scan.getLex();
         lex_type = curr_lex.GetType();
         lex_val = curr_lex.GetValue();
+        cout << curr_lex << endl;
     }
     void S(); //done
     void FUNC(); //done
@@ -409,7 +412,10 @@ class Parser{
     void FORPARAMS(); 
     void EXPR(); //done
     void GOTOOP(); //done
-    void LEX_EXPR(); //done
+    void EXPRESSION(); 
+    void E1();
+    void T();
+    void K();
 public:
     Parser(){}
     void analyze(){
@@ -427,6 +433,7 @@ public:
 };
 
 void Parser::S(){
+    cout << "S\n";
     if(lex_type == LEX_FUNCTION){
         FUNC();
         S();
@@ -442,6 +449,7 @@ void Parser::S(){
 }
 
 void Parser::FUNC(){
+    cout << "FUNC\n";
     if(lex_type == LEX_FUNCTION){
         gl();
         if(lex_type == LEX_ID){
@@ -451,17 +459,7 @@ void Parser::FUNC(){
                 FUNCPARAMS();
                 if(lex_type == LEX_RRBRACKET){
                     gl();
-                    if(lex_type == LEX_LFBRACKET){
-                        gl();
-                        BLOCK();
-                        if(lex_type != LEX_RFBRACKET){
-                            throw "expected '}'1";
-                        }else{
-                            gl();
-                        }
-                    }else{
-                        throw "expected '{'";
-                    }
+                    OP();
                 }else{
                     throw "expected ')'";
                 }
@@ -477,10 +475,13 @@ void Parser::FUNC(){
 }
 
 void Parser::OP(){
+    cout << "OP\n";
     if(lex_type == LEX_VAR){
         VALDEF();
     }else if(lex_type == LEX_SEMICOLON){
         EMPTYOP();
+    }else if(lex_type == LEX_LFBRACKET){
+        BLOCK();
     }else if(lex_type == LEX_IF){
         IFOP();
     }else if((lex_type == LEX_WHILE) || (lex_type == LEX_FOR) || (lex_type == LEX_DO)){
@@ -488,13 +489,14 @@ void Parser::OP(){
     }else if((lex_type == LEX_BREAK) || (lex_type == LEX_CONTINUE) || (lex_type == LEX_RETURN)){
         GOTOOP();
     }else if(lex_type == LEX_ID){
-        LEX_EXPR();
+        EXPRESSION();
     }else{
         throw "expected var/;/if/while/for/break/continue/return or name";
     }
 }
 
 void Parser::FUNCPARAMS(){
+    cout << "FUNCPARAMS\n";
     if(lex_type == LEX_ID){
         gl();
         M();   
@@ -502,6 +504,7 @@ void Parser::FUNCPARAMS(){
 }
 
 void Parser::M(){
+    cout << "M\n";
     if(lex_type == LEX_COMA){
         gl();
         if(lex_type == LEX_ID){
@@ -514,6 +517,7 @@ void Parser::M(){
 }
 
 void Parser::VALDEF(){
+    cout << "VALDEF\n";
     if(lex_type == LEX_VAR){
         gl();
         if(lex_type == LEX_ID){
@@ -533,14 +537,16 @@ void Parser::VALDEF(){
 }
 
 void Parser::L(){
+    cout << "L\n";
     if(lex_type == LEX_EQUAL){
         gl();
-        LEX_EXPR();
+        EXPRESSION();
         F();
     }
 }
 
 void Parser::F(){
+    cout << "F\n";
     if(lex_type == LEX_COMA){
         gl();
         if(lex_type == LEX_ID){
@@ -553,6 +559,7 @@ void Parser::F(){
 }
 
 void Parser::EMPTYOP(){
+    cout << "EMPTYOP\n";
     if(lex_type != LEX_SEMICOLON){
         throw "expected ';'";
     }else{
@@ -561,33 +568,29 @@ void Parser::EMPTYOP(){
 }
 
 void Parser::BLOCK(){
-    if((lex_type == LEX_VAR) || (lex_type == LEX_SEMICOLON) || (lex_type == LEX_IF) 
-        || (lex_type == LEX_WHILE) || (lex_type == LEX_FOR) || (lex_type == LEX_DO) 
-        || (lex_type == LEX_BREAK) || (lex_type == LEX_CONTINUE) || (lex_type == LEX_RETURN)
-        || (lex_type == LEX_ID) ){
-        OP();
-        BLOCK();
+    cout << "BLOCK\n";
+    if(lex_type == LEX_LFBRACKET){
+        gl();
+        while(lex_type != LEX_RFBRACKET){
+            OP();
+        }
+        gl();
+    }else{
+        throw "expected '{'";
     }
 }
 
 void Parser::IFOP(){
+    cout << "IFOP\n";
     if(lex_type == LEX_IF){
         gl();
         if(lex_type == LEX_LRBRACKET){
             gl();
-            LEX_EXPR();
+            EXPRESSION();
             if(lex_type == LEX_RRBRACKET){
                 gl();
-                if(lex_type == LEX_LFBRACKET){
-                    OP();
-                    if(lex_type == LEX_RFBRACKET){
-                        D();
-                    }else{
-                        throw "expected '}'2";
-                    }                    
-                }else{
-                    throw "expected '{'";
-                }
+                OP();
+                D();                   
             }else{
                 throw "expected ')'";
             }
@@ -600,41 +603,23 @@ void Parser::IFOP(){
 }
 
 void Parser::D(){
+    cout << "D\n";
     if(lex_type == LEX_ELSE){
        gl();
-       if(lex_type == LEX_LFBRACKET){
-           gl();
-           OP();
-           if(lex_type != LEX_RFBRACKET){
-               throw "expected '}'3";
-           }else{
-               gl();
-           }
-       }else{
-           throw "expected '{'";
-       }
+       OP();
     }
 }
 
 void Parser::CYCLEOP(){
+    cout << "CYCLEOP\n";
     if(lex_type == LEX_WHILE){
         gl();
         if(lex_type == LEX_LRBRACKET){
             gl();
-            LEX_EXPR();
+            EXPRESSION();
             if(lex_type == LEX_RRBRACKET){
                 gl();
-                if(lex_type == LEX_LFBRACKET){
-                    gl();
-                    BLOCK();
-                    if(lex_type != LEX_RFBRACKET){
-                        throw "expected '}'4";
-                    }else{
-                        gl();
-                    }
-                }else{
-                    throw "expected '{'";
-                }
+                OP();        
             }else{
                 throw "expected ')'";
             }
@@ -643,37 +628,27 @@ void Parser::CYCLEOP(){
         }
     }else if(lex_type == LEX_DO){
         gl();
-        if(lex_type == LEX_LFBRACKET){
+        OP();
+        if(lex_type == LEX_WHILE){
             gl();
-            BLOCK();
-            if(lex_type == LEX_RFBRACKET){
+            if(lex_type == LEX_LRBRACKET){
                 gl();
-                if(lex_type == LEX_WHILE){
+                EXPRESSION();
+                if(lex_type == LEX_RRBRACKET){
                     gl();
-                    if(lex_type == LEX_LRBRACKET){
-                        gl();
-                        LEX_EXPR();
-                        if(lex_type == LEX_RRBRACKET){
-                            gl();
-                            if(lex_type != LEX_SEMICOLON){
-                                throw "expected ';'";
-                            }else{
-                                gl();
-                            }
-                        }else{
-                            throw "expected ')'";
-                        }
+                    if(lex_type != LEX_SEMICOLON){
+                        throw "expected ';'";
                     }else{
-                        throw "expected '('";
+                        gl();
                     }
                 }else{
-                    throw "expected 'while'";
+                    throw "expected ')'";
                 }
             }else{
-                throw "expected '}'5";
+                throw "expected '('";
             }
         }else{
-            throw "expected '{'";
+            throw "expected 'while'";
         }
     }else if(lex_type == LEX_FOR){
         gl();
@@ -682,17 +657,7 @@ void Parser::CYCLEOP(){
             FORPARAMS();
             if(lex_type == LEX_RRBRACKET){
                 gl();
-                if(lex_type == LEX_LFBRACKET){
-                    gl();
-                    BLOCK();
-                    if(lex_type == LEX_RFBRACKET){
-                        gl();
-                    }else{
-                        throw "expected '}'6";
-                    }
-                }else{
-                    throw "expected '{'";
-                }
+                OP();
             }else{
                 throw "expected ')'";
             }
@@ -706,13 +671,14 @@ void Parser::CYCLEOP(){
 
 
 void Parser::FORPARAMS(){
+    cout << "FORPARAMS\n";
     if(lex_type == LEX_VAR){
         gl();
         if(lex_type == LEX_ID){
             gl();
             if(lex_type == LEX_IN){
                 gl();
-                LEX_EXPR();
+                EXPRESSION();
             }else{
                 throw "expected 'in'";
             }
@@ -723,7 +689,7 @@ void Parser::FORPARAMS(){
         gl();
         if(lex_type == LEX_IN){
             gl();
-            LEX_EXPR();
+            EXPRESSION();
         }else{
             if((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE)
             ||(lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_PERCENT) || (lex_type == LEX_SLASH)){
@@ -795,12 +761,14 @@ void Parser::FORPARAMS(){
 }
 
 void Parser::EXPR(){
+    cout << "EXPR\n";
     if(lex_type == LEX_ID){
-        LEX_EXPR();
+        EXPRESSION();
     }
 }
 
 void Parser::GOTOOP(){
+    cout << "GOTOOP\n";
     if((lex_type == LEX_BREAK) || (lex_type == LEX_CONTINUE)){
         gl();
         if(lex_type == LEX_SEMICOLON){
@@ -821,43 +789,81 @@ void Parser::GOTOOP(){
     }
 }
 
-void Parser::LEX_EXPR(){
-    if((lex_type == LEX_ID) || (lex_type == LEX_NUM) || (lex_type == LEX_STR)){
+void Parser::EXPRESSION(){
+    cout << "EXPRESSION\n";
+    E1();
+    if((lex_type == LEX_EQUAL) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE) || (lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_NOTEQUAL) || (lex_type == LEX_PLUSEQ) || (lex_type == LEX_MINUSEQ) || (lex_type == LEX_MULTIPLYEQ) || (lex_type == LEX_SLASHEQ) || (lex_type == LEX_PERCENTEQ)){
         gl();
-        if((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE)
-            ||(lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_PERCENT) || (lex_type == LEX_SLASH)){
-                gl();
-                if((lex_type == LEX_ID) || (lex_type == LEX_NUM) | (lex_type == LEX_STR)){
-                    gl();
-                }else{
-                    throw "expected name or number or string";
-                }
-        }else if(lex_type == LEX_EQUAL){
+        E1();
+    }
+}
+
+void Parser::E1(){
+    cout << "E1\n";
+    T();
+    while((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_OR)){
+        gl();
+        T();
+    }
+}
+
+void Parser::T(){
+    cout << "T\n";
+    K();
+    while((lex_type == LEX_DOT) || (lex_type == LEX_MULTIPLY) || (lex_type == LEX_SLASH) || (lex_type == LEX_AND)){
+        if(lex_type == LEX_DOT){
             gl();
-            if((lex_type == LEX_ID) || (lex_type == LEX_NUM) || (lex_type == LEX_STR)){
-                if((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE)
-                    ||(lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_PERCENT) || (lex_type == LEX_SLASH)){
+            if(lex_type == LEX_ID){
+                gl();
+                if(lex_type == LEX_LRBRACKET){
+                    gl();
+                    EXPRESSION();
+                    if(lex_type == LEX_RRBRACKET){
                         gl();
-                        if((lex_type == LEX_ID) || (lex_type == LEX_NUM) | (lex_type == LEX_STR)){
+                        if(lex_type == LEX_SEMICOLON){
                             gl();
                         }else{
-                            throw "expected name or number or string";
+                            throw "expected ';'";
                         }
+                    }else{
+                        throw "expected ')'";
+                    }
+                }else{
+                    throw "expected '('";
                 }
             }else{
-                throw "expected name or number or string"; 
+                throw "expected name";
             }
-
-        }else if((lex_type == LEX_PLUSEQ) || (lex_type == LEX_MINUSEQ) || (lex_type == LEX_PERCENTEQ)){
+        }else{
+            K();
             gl();
-            if((lex_type == LEX_ID) || (lex_type == LEX_STR) || (lex_type == LEX_NUM)){
-                gl();
-            }else{
-               throw "expected name or number or string";
-            }
         }
-    }else{
-        throw "expected name or number or string";
+    }
+}
+
+void Parser::K(){
+    cout << "K\n";
+    if(lex_type == LEX_ID){
+        gl();
+    }else if(lex_type == LEX_NUM){
+        gl();
+    }else if(lex_type == LEX_STR){
+        gl();
+    }else if(lex_type == LEX_TRUE){
+        gl();
+    }else if(lex_type == LEX_FALSE){
+        gl();
+    }else if(lex_type == LEX_EXCL){
+        gl();
+        F();
+    }else if(lex_type == LEX_LRBRACKET){
+        gl();
+        EXPRESSION();
+        if(lex_type == LEX_RRBRACKET){
+            gl();
+        }else{
+            throw "expected ')'";
+        }
     }
 }
 
