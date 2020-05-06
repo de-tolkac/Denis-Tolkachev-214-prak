@@ -2,6 +2,8 @@
 #include <iostream>
 #include <stdlib.h>
 #include <vector>
+#include <stack>
+#include <stdexcept>
 
 using namespace std;
 
@@ -18,7 +20,9 @@ enum type_of_lex{
     LEX_LESSEQ, LEX_MOREEQ, LEX_TRUE, LEX_FALSE, LEX_UNDEFINED, LEX_COMA, //38 - 43
     LEX_EXCL, LEX_EXCLEQ, LEX_EXCLBOUBLEEQ, LEX_PLUSEQ, LEX_MINUSEQ, //44 - 48
     LEX_PERCENTEQ, LEX_MULTIPLYEQ, LEX_AMP, LEX_PIPE, LEX_LFBRACKET,//49 - 53
-    LEX_RFBRACKET, LEX_DOT, LEX_SLASHEQ//54 - 56
+    LEX_RFBRACKET, LEX_DOT, LEX_SLASHEQ,//54 - 56
+    POLIZ_GO, POLIZ_FGO, POLIZ_LABEL, POLIZ_ADDRESS, POLIZ_BLANK, // 57 - 61
+    LEX_READ, LEX_WRITE //62 - 63
 };
 
 
@@ -42,6 +46,145 @@ public:
     }
 };
 
+const char* getTypeName(Lex l){
+    switch(l.GetType()){
+        case 0: return "LEX_NULL"; break;
+        case 1: return "LEX_FIN"; break;
+        case 2: return "LEX_FUNCTION"; break;
+        case 3: return "LEX_ID"; break;
+        case 4: return "LEX_VAR"; break;
+        case 5: return "LEX_IF"; break;
+        case 6: return "LEX_ELSE"; break;
+        case 7: return "LEX_WHILE"; break;
+        case 8: return "LEX_FOR"; break;
+        case 9: return "LEX_DO"; break;
+        case 10: return "LEX_IN"; break;
+        case 11: return "LEX_BREAK"; break;
+        case 12: return "LEX_CONTINUE"; break;
+        case 13: return "LEX_RETURN"; break;
+        case 14: return "LEX_STR"; break;
+        case 15: return "LEX_NUM"; break;
+        case 16: return "LEX_SEMICOLON"; break;
+        case 17: return "LEX_EQUAL"; break;
+        case 18: return "LEX_DOUBLEEQUAL"; break;
+        case 19: return "LEX_TRIPPLEEQUAL"; break;
+        case 20: return "LEX_LSBRACKET"; break;
+        case 21: return "LEX_RSBRACKET"; break;
+        case 22: return "LEX_LRBRACKET"; break;
+        case 23: return "LEX_RRBRACKET"; break;
+        case 24: return "LEX_PLUS"; break;
+        case 25: return "LEX_MINUS"; break;
+        case 26: return "LEX_MULTIPLY"; break;
+        case 27: return "LEX_SLASH"; break;
+        case 28: return "LEX_PERCENT"; break;
+        case 29: return "LEX_INC"; break;
+        case 30: return "LEX_DEC"; break;
+        case 31: return "LEX_NOT"; break;
+        case 32: return "LEX_OR"; break;
+        case 33: return "LEX_AND"; break;
+        case 34: return "LEX_NOTEQUAL"; break;
+        case 35: return "LEX_LESS"; break;
+        case 36: return "LEX_MORE"; break;
+        case 37: return "LEX_LOGICEQUAL"; break;
+        case 38: return "LEX_LESSEQ"; break;
+        case 39: return "LEX_MOREEQ"; break;
+        case 40: return "LEX_TRUE"; break;
+        case 41: return "LEX_FALSE"; break;
+        case 42: return "LEX_UNDEFINED"; break;
+        case 43: return "LEX_COMA"; break;
+        case 44: return "LEX_EXCL"; break;
+        case 45: return "LEX_EXCLEQ"; break;
+        case 46: return "LEX_EXCLBOUBLEEQ"; break;
+        case 47: return "LEX_PLUSEQ"; break;
+        case 48: return "LEX_MINUSEQ"; break;
+        case 49: return "LEX_PERCENTEQ"; break;
+        case 50: return "LEX_MULTIPLYEQ"; break;
+        case 51: return "LEX_AMP"; break;
+        case 52: return "LEX_PIPE"; break;
+        case 53: return "LEX_LFBRACKET"; break;
+        case 54: return "LEX_RFBRACKET"; break;
+        case 55: return "LEX_DOT"; break;
+        case 56: return "LEX_SLASHEQ"; break;
+        case 57: return "POLIZ_GO"; break;
+        case 58: return "POLIZ_FGO"; break;
+        case 59: return "POLIZ_LABEL"; break;
+        case 60: return "POLIZ_ADDRESS"; break;
+        case 61: return "POLIZ_BLANK"; break;
+        case 62: return "LEX_READ"; break;
+        case 63: return "LEX_WRITE"; break;
+    }
+}
+
+
+const char* getTypeValue(Lex l){
+    switch(l.GetType()){
+        case 0: return "NULL"; break;
+        case 1: return "конец"; break;
+        case 2: return "function"; break;
+        case 3: return "id"; break;
+        case 4: return "var"; break;
+        case 5: return "if"; break;
+        case 6: return "else"; break;
+        case 7: return "while"; break;
+        case 8: return "for"; break;
+        case 9: return "do"; break;
+        case 10: return "in"; break;
+        case 11: return "break"; break;
+        case 12: return "continue"; break;
+        case 13: return "return"; break;
+        case 14: return "строка"; break;
+        case 15: return "чиcло"; break;
+        case 16: return ";"; break;
+        case 17: return "="; break;
+        case 18: return "=="; break;
+        case 19: return "==="; break;
+        case 20: return "["; break;
+        case 21: return "]"; break;
+        case 22: return "("; break;
+        case 23: return ")"; break;
+        case 24: return "+"; break;
+        case 25: return "-"; break;
+        case 26: return "*"; break;
+        case 27: return "/"; break;
+        case 28: return "%"; break;
+        case 29: return "++"; break;
+        case 30: return "--"; break;
+        case 31: return "!"; break;
+        case 32: return "||"; break;
+        case 33: return "&&"; break;
+        case 34: return "!="; break;
+        case 35: return "<"; break;
+        case 36: return ">"; break;
+        case 37: return "=="; break;
+        case 38: return "<="; break;
+        case 39: return ">="; break;
+        case 40: return "true"; break;
+        case 41: return "false"; break;
+        case 42: return "undefined"; break;
+        case 43: return ","; break;
+        case 44: return "!"; break;
+        case 45: return "!="; break;
+        case 46: return "!=="; break;
+        case 47: return "+="; break;
+        case 48: return "-="; break;
+        case 49: return "%="; break;
+        case 50: return "*="; break;
+        case 51: return "&"; break;
+        case 52: return "|"; break;
+        case 53: return "{"; break;
+        case 54: return "}"; break;
+        case 55: return "."; break;
+        case 56: return "/="; break;
+        case 57: return "POLIZ_GO"; break;
+        case 58: return "POLIZ_FGO"; break;
+        case 59: return "POLIZ_LABEL"; break;
+        case 60: return "POLIZ_ADDRESS"; break;
+        case 61: return "POLIZ_BLANK"; break;
+        case 62: return "read"; break;
+        case 63: return "write"; break;
+    }
+}
+
 class Ident{
     char       * name;
     bool         declare;
@@ -62,7 +205,7 @@ public:
     bool get_assign  () { return assign; }
     void put_assign  (){ assign = true; }
     int  get_value   () { return value; }
-    void  ut_value   (int v){ value = v; }
+    void put_value   (int v){ value = v; }
 };
  
 class Tabl_ident{
@@ -75,17 +218,17 @@ public:
         top = 1;
     }
     ~Tabl_ident () { delete [] p; }
-        Ident& operator[] ( int k ) { return p[k]; }
-        int put ( const char *buf );
+    Ident& operator[] ( int k ) { return p[k]; }
+    int put ( const char *buf );
 };
  
 int Tabl_ident::put(const char *buf){
-  for ( int j = 1; j < top; j++ )
-    if ( !strcmp ( buf, p[j].get_name() ) )
-      return j;
-  p[top].put_name(buf);
-  ++top;
-  return top-1;
+    for (int j = 1; j < top; j++)
+        if (!strcmp ( buf, p[j].get_name()))
+            return j;
+    p[top].put_name(buf);
+    ++top;
+    return top-1;
 }
  
  
@@ -141,6 +284,7 @@ char* Scanner::TW[] = {
     (char *)"if", (char *)"else", (char *)"while",
     (char *)"for", (char *)"do", (char *)"in",
     (char *)"break", (char *)"continue", (char *)"return",
+    (char*)"read", (char*)"write", (char*)"true", (char*)"false",
     NULL
 };
 
@@ -149,6 +293,7 @@ type_of_lex Scanner::words[] = {
     LEX_IF, LEX_ELSE, LEX_WHILE,
     LEX_FOR, LEX_DO, LEX_IN,
     LEX_BREAK, LEX_CONTINUE, LEX_RETURN,
+    LEX_READ, LEX_WRITE, LEX_TRUE, LEX_FALSE,
     LEX_NULL
 };
 
@@ -176,7 +321,7 @@ type_of_lex Scanner::dlms[] = {
     LEX_NULL
 };
 
-vector<char*> LSA; //Lex Str Arr
+vector<string> LSA; //Lex Str Arr
 
 Lex Scanner::getLex(){
     int d, j;
@@ -385,6 +530,21 @@ Lex Scanner::getLex(){
         }
     }while(true);
 }
+vector<string> usedIDS;
+
+void checkId(Lex l){
+    if(find(usedIDS.begin(), usedIDS.end(),TID[l.GetValue()].get_name()) == usedIDS.end()){
+         usedIDS.push_back(TID[l.GetValue()].get_name());
+    }else{
+        string msg = "redeclaration of '";
+        msg += TID[l.GetValue()].get_name();
+        msg += "' ";
+        throw msg;
+    }
+}   
+
+vector<Lex> poliz;
+
 class Parser{
     Scanner scan;
     Lex curr_lex; // текущая лексема 
@@ -392,6 +552,7 @@ class Parser{
     int lex_val;
     void gl(){
         curr_lex = scan.getLex();
+        //cout << getTypeName(curr_lex) << ", ";
         lex_type = curr_lex.GetType();
         lex_val = curr_lex.GetValue();
         //cout << curr_lex << endl;
@@ -401,6 +562,7 @@ class Parser{
     void FUNCPARAMS(); //done
     void M(); //done
     void OP(); //done
+    void ASSIGN();
     void VALDEF(); //done
     void L(); //done
     void F(); //done
@@ -443,6 +605,52 @@ void Parser::S(){
         || (lex_type == LEX_ID) ){
         OP();
         S();
+    }else if(lex_type == LEX_READ){
+        gl();
+        if(lex_type == LEX_LRBRACKET){
+            gl();
+            if(lex_type == LEX_ID){
+                poliz.push_back(Lex(POLIZ_ADDRESS, lex_val)); 
+                poliz.push_back(Lex(LEX_READ));
+                gl();
+                if(lex_type == LEX_RRBRACKET){
+                    gl();
+                    if(lex_type == LEX_SEMICOLON){
+                        gl();
+                        S();
+                    }else{
+                        throw "expected ;";
+                    }
+                }else{
+                    throw "expected ')'";
+                }
+            }else{
+                throw "expected id";
+            }
+        }else{
+            throw "expected '('";
+        }
+    }else if(lex_type == LEX_WRITE){
+        gl();
+        if(lex_type == LEX_LRBRACKET){
+            gl();
+            EXPRESSION();
+            if(lex_type == LEX_RRBRACKET){
+                gl();
+                poliz.push_back(Lex(LEX_WRITE));
+                if(lex_type == LEX_SEMICOLON){
+                    gl();
+                    S();
+                }else{
+                    throw "expected ;";
+                }
+            }else{
+                throw "expected ')'";
+            }
+            
+        }else{
+            throw "expected '('";
+        }
     }else if(lex_type != LEX_FIN){
         throw "expected function or operator or variable definition";
     }
@@ -489,9 +697,28 @@ void Parser::OP(){
     }else if((lex_type == LEX_BREAK) || (lex_type == LEX_CONTINUE) || (lex_type == LEX_RETURN)){
         GOTOOP();
     }else if(lex_type == LEX_ID){
-        EXPRESSION();
+        ASSIGN();
+        if(lex_type == LEX_SEMICOLON){
+            poliz.push_back(Lex(LEX_SEMICOLON));
+            gl();
+        }else{
+            throw "expected ';'";
+        }
     }else{
         throw "expected var/;/if/while/for/break/continue/return or name";
+    }
+}
+
+void Parser::ASSIGN(){
+    poliz.push_back(Lex(POLIZ_ADDRESS, lex_val));
+    gl();
+    if((lex_type == LEX_EQUAL) || (lex_type == LEX_PLUSEQ) || (lex_type == LEX_MINUSEQ) || (lex_type == LEX_MULTIPLYEQ) || (lex_type == LEX_SLASHEQ) || (lex_type == LEX_PERCENTEQ)){
+        Lex assign = curr_lex;
+        gl();
+        EXPRESSION();
+        poliz.push_back(assign);
+    }else{
+        throw "expected assignment";
     }
 }
 
@@ -521,6 +748,8 @@ void Parser::VALDEF(){
     if(lex_type == LEX_VAR){
         gl();
         if(lex_type == LEX_ID){
+            checkId(curr_lex);
+            poliz.push_back(curr_lex);
             gl();
             L();
             if(lex_type == LEX_SEMICOLON){
@@ -541,6 +770,7 @@ void Parser::L(){
     if(lex_type == LEX_EQUAL){
         gl();
         EXPRESSION();
+        poliz.push_back(Lex(LEX_EQUAL));
         F();
     }
 }
@@ -550,6 +780,7 @@ void Parser::F(){
     if(lex_type == LEX_COMA){
         gl();
         if(lex_type == LEX_ID){
+            poliz.push_back(curr_lex);
             gl();
             L();
         }else{
@@ -580,6 +811,8 @@ void Parser::BLOCK(){
     }
 }
 
+int elseAdr;
+
 void Parser::IFOP(){
     //cout << "IFOP\n";
     if(lex_type == LEX_IF){
@@ -588,8 +821,15 @@ void Parser::IFOP(){
             gl();
             EXPRESSION();
             if(lex_type == LEX_RRBRACKET){
+                int adr1 = (int)poliz.size(); 
+                poliz.push_back(Lex(POLIZ_BLANK));
+                poliz.push_back(Lex(POLIZ_FGO));
                 gl();
                 OP();
+                elseAdr = (int)poliz.size(); 
+                poliz.push_back(Lex(POLIZ_BLANK)); 
+                poliz.push_back(Lex(POLIZ_GO)); 
+                poliz[adr1] = Lex(POLIZ_LABEL, (int)poliz.size());
                 D();                   
             }else{
                 throw "expected ')'";
@@ -607,19 +847,29 @@ void Parser::D(){
     if(lex_type == LEX_ELSE){
        gl();
        OP();
+       poliz[elseAdr] = Lex(POLIZ_LABEL, (int)poliz.size());
     }
 }
+
+int for_adr1, for_adr2, for_adr3, for_adr4, blank_for_adr1;
 
 void Parser::CYCLEOP(){
     //cout << "CYCLEOP\n";
     if(lex_type == LEX_WHILE){
+        int adr1 = (int)poliz.size();
         gl();
         if(lex_type == LEX_LRBRACKET){
             gl();
             EXPRESSION();
             if(lex_type == LEX_RRBRACKET){
+                int adr2 = (int)poliz.size(); 
+                poliz.push_back(Lex(POLIZ_BLANK)); 
+                poliz.push_back(Lex(POLIZ_FGO));
                 gl();
-                OP();        
+                OP();    
+                poliz.push_back(Lex(POLIZ_LABEL, adr1)); 
+                poliz.push_back(Lex(POLIZ_GO)); 
+                poliz[adr2] = Lex(POLIZ_LABEL, (int)poliz.size());    
             }else{
                 throw "expected ')'";
             }
@@ -658,6 +908,10 @@ void Parser::CYCLEOP(){
             if(lex_type == LEX_RRBRACKET){
                 gl();
                 OP();
+                poliz.push_back(Lex(POLIZ_LABEL, for_adr4));
+                poliz.push_back(Lex(POLIZ_GO));
+                for_adr1 = (int)poliz.size();
+                poliz[blank_for_adr1] = Lex(POLIZ_LABEL, for_adr1);
             }else{
                 throw "expected ')'";
             }
@@ -671,93 +925,35 @@ void Parser::CYCLEOP(){
 
 
 void Parser::FORPARAMS(){
-    //cout << "FORPARAMS\n";
-    if(lex_type == LEX_VAR){
+    ASSIGN();
+    if(lex_type == LEX_SEMICOLON){
+        poliz.push_back(Lex(LEX_SEMICOLON));
+        for_adr3 = (int)poliz.size();
         gl();
-        if(lex_type == LEX_ID){
-            gl();
-            if(lex_type == LEX_IN){
-                gl();
-                EXPRESSION();
-            }else{
-                throw "expected 'in'";
-            }
-        }else{
-            throw "expected name";
-        }
-    }else if(lex_type == LEX_ID){
-        gl();
-        if(lex_type == LEX_IN){
-            gl();
-            EXPRESSION();
-        }else{
-            if((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE)
-            ||(lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_PERCENT) || (lex_type == LEX_SLASH)){
-                gl();
-                if(lex_type == LEX_ID || lex_type == LEX_NUM){
-                    gl();
-                }else{
-                    throw "expected name or number";
-                }
-            }else if(lex_type == LEX_SEMICOLON){
-                gl();
-                EXPR();
-                if(lex_type == LEX_SEMICOLON){
-                    gl();
-                    EXPR();
-                }else{
-                    throw "expected ';'";
-                }
-            }else if(lex_type == LEX_EQUAL){
-                gl();
-                if(lex_type == LEX_ID || lex_type == LEX_STR || lex_type == LEX_NUM){
-                    gl();
-                    if(lex_type == LEX_SEMICOLON){
-                        gl();
-                        EXPR();
-                        if(lex_type == LEX_SEMICOLON){
-                            gl();
-                            EXPR();
-                            gl();
-                        }else{
-                            throw "expected ';'";
-                        }
-                    }else{
-                        throw "expected ';'";
-                    }
-                }else{
-                    throw "expected name or string or number";
-                }
-            }else{
-                throw "expected ';'";
-            }
-        }
-    }else if(lex_type == LEX_NUM){
-        EXPR();
-        gl();
+        EXPRESSION();
+        int blank_for_adr2;
+        blank_for_adr1 = (int)poliz.size();
+        poliz.push_back(Lex(POLIZ_BLANK));
+        poliz.push_back(Lex(POLIZ_FGO));
+        blank_for_adr2 = (int)poliz.size();
+        poliz.push_back(Lex(POLIZ_BLANK));
+        poliz.push_back(Lex(POLIZ_GO));
+        for_adr4 = (int)poliz.size();
         if(lex_type == LEX_SEMICOLON){
             gl();
-            EXPR();
-            if(lex_type == LEX_SEMICOLON){
-                gl();
-                EXPR();
-            }else{
-                throw "expected ';'";
-            }
-        }else{
-            throw "expected ';'";
-        }
-    }else if(lex_type == LEX_SEMICOLON){
-        gl();
-        EXPR();
-        if(lex_type == LEX_SEMICOLON){
-            EXPR();
+            ASSIGN();
+            poliz.push_back(Lex(LEX_SEMICOLON));
+            poliz.push_back(Lex(POLIZ_LABEL, for_adr3));
+            poliz.push_back(Lex(POLIZ_GO));
+            for_adr2 = (int)poliz.size();
+            poliz[blank_for_adr2] = Lex(POLIZ_LABEL, for_adr2);
         }else{
             throw "expected ';'";
         }
     }else{
-        throw "expected var or name or ';'";
+        throw "expected ';'";
     }
+    
 }
 
 void Parser::EXPR(){
@@ -792,9 +988,11 @@ void Parser::GOTOOP(){
 void Parser::EXPRESSION(){
     //cout << "EXPRESSION\n";
     E1();
-    if((lex_type == LEX_EQUAL) || (lex_type == LEX_LESS) || (lex_type == LEX_MORE) || (lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_NOTEQUAL) || (lex_type == LEX_PLUSEQ) || (lex_type == LEX_MINUSEQ) || (lex_type == LEX_MULTIPLYEQ) || (lex_type == LEX_SLASHEQ) || (lex_type == LEX_PERCENTEQ)){
+    if((lex_type == LEX_LESS) || (lex_type == LEX_MORE) || (lex_type == LEX_LESSEQ) || (lex_type == LEX_MOREEQ) || (lex_type == LEX_DOUBLEEQUAL)|| (lex_type == LEX_NOTEQUAL)){
+        Lex op = curr_lex;
         gl();
         E1();
+        poliz.push_back(op);
     }
 }
 
@@ -802,8 +1000,10 @@ void Parser::E1(){
     //cout << "E1\n";
     T();
     while((lex_type == LEX_PLUS) || (lex_type == LEX_MINUS) || (lex_type == LEX_OR)){
+        Lex op = curr_lex;
         gl();
         T();
+        poliz.push_back(op);
     }
 }
 
@@ -811,6 +1011,7 @@ void Parser::T(){
     //cout << "T\n";
     K();
     while((lex_type == LEX_DOT) || (lex_type == LEX_MULTIPLY) || (lex_type == LEX_SLASH) || (lex_type == LEX_AND)){
+        Lex op = curr_lex;
         if(lex_type == LEX_DOT){
             gl();
             if(lex_type == LEX_ID){
@@ -836,6 +1037,7 @@ void Parser::T(){
             }
         }else{
             K();
+            poliz.push_back(op);
             gl();
         }
     }
@@ -844,18 +1046,24 @@ void Parser::T(){
 void Parser::K(){
     //cout << "K\n";
     if(lex_type == LEX_ID){
+        poliz.push_back(curr_lex);
         gl();
     }else if(lex_type == LEX_NUM){
+        poliz.push_back(curr_lex);
         gl();
     }else if(lex_type == LEX_STR){
+        poliz.push_back(curr_lex);
         gl();
     }else if(lex_type == LEX_TRUE){
+        poliz.push_back(curr_lex);
         gl();
     }else if(lex_type == LEX_FALSE){
+        poliz.push_back(curr_lex);
         gl();
     }else if(lex_type == LEX_EXCL){
         gl();
         F();
+        poliz.push_back(curr_lex);
     }else if(lex_type == LEX_LRBRACKET){
         gl();
         EXPRESSION();
@@ -866,17 +1074,181 @@ void Parser::K(){
         }
     }
 }
+struct stackField{
+    int type; //0 - int, 1 - string, 2 - boolean
+    int intVal;
+    string stringVal;
+    bool boolVal;
+};
+
+stackField resolveTypes(stackField first, stackField second){
+    try{
+        stackField res;
+        if(first.type == 0){
+            res.type = 0;
+            res.stringVal = "\0";
+            res.boolVal = false;
+            if(second.type == 0){
+                return second;
+            }else if(second.type == 1){
+                res.intVal = stoi(second.stringVal);
+            }else if(second.type == 2){
+                res.intVal = second.boolVal;
+            }
+        }else if(first.type == 1){
+            res.type = 1;
+            res.intVal = 0;
+            res.boolVal = false;
+            if(second.type == 0){
+                res.stringVal = to_string(second.intVal);
+            }else if(second.type == 1){
+                return second;
+            }else if(second.type == 2){
+                if(second.boolVal == true){
+                    res.stringVal = "true";
+                }else{
+                    res.stringVal = "false";
+                }
+            }
+        }else if(first.type == 2){
+            res.type = 2;
+            res.intVal = 0;
+            res.stringVal = "\0";
+            if(second.type == 0){
+                if(second.intVal > 0){
+                    res.boolVal = true;
+                }else{
+                    res.boolVal = false;
+                }
+            }else if(second.type == 1){
+                if(second.stringVal == "true"){
+
+                }else if(second.stringVal == "false"){
+
+                }else{
+                    throw "Невозможно преобразовать string в boolean";
+                }
+            }else if(second.type == 2){
+                return second;
+            }
+        }
+        return res;
+    }
+    catch(invalid_argument){
+        cout << "Неверный тип операнда\n";
+        exit(1);
+    }
+    catch(out_of_range){
+        cout << "int overflow\n";
+        exit(1);
+    }
+    catch(const char* err){
+        cout << err << endl;
+        exit(1);
+    }
+}
+
+class Executer{
+    Lex c_lex;
+public:
+    void execute();
+};
+
+void Executer::execute(){
+    int index = 0, size = (int)poliz.size();
+    stack<stackField> args;
+    while(index < size){
+        c_lex = poliz[index];
+        switch(c_lex.GetType()){
+            case POLIZ_ADDRESS: 
+            case POLIZ_LABEL:
+            case LEX_NUM:
+            {
+                stackField newField = {0, c_lex.GetValue(), "\0", false};
+                args.push(newField);
+                break;
+            }
+            case LEX_STR:
+            {
+                stackField newField = {1, 0, LSA[c_lex.GetValue()], false};
+                args.push(newField);
+                break;
+            }
+            case LEX_TRUE:
+            case LEX_FALSE:{
+                stackField newField = {2, 0, "\0", false};
+                args.push(newField);
+                break;
+            }
+            case LEX_WRITE:
+            {
+                stackField field = args.top();
+                if(field.type == 0){
+                    cout << field.intVal << endl;
+                }else if(field.type == 1){
+                    cout << field.stringVal << endl;
+                }else if(field.type == 2){
+                    cout << field.boolVal  << endl;
+                }
+                args.pop();
+                break;
+            }
+            case LEX_OR:
+            {
+                stackField first = args.top();
+                if(first.type == 1){
+                    cout << "Неверный тип операндов: string";
+                    exit(1);
+                }
+                args.pop();
+                stackField second = args.top();
+                args.pop();
+                second  = resolveTypes(first, second);
+                stackField res = {first.type, first.intVal || second.intVal, "\0",  first.boolVal || second.boolVal};   
+                args.push(res);
+                break;
+            }
+            case LEX_AND:
+            {
+                stackField first = args.top();
+                if(first.type == 1){
+                    cout << "Неверный тип операндов: string";
+                    exit(1);
+                }
+                args.pop();
+                stackField second = args.top();
+                args.pop();
+                second  = resolveTypes(first, second);
+                stackField res = {first.type, first.intVal && second.intVal, "\0",  first.boolVal && second.boolVal};   
+                args.push(res);
+                break;
+            }
+            default:
+                break;
+        }
+        index++;
+    }
+}
 
 int main(){
     try{
         Parser test;
+        Executer e;
         test.analyze();
+        cout << "-----------\n";
+        for(int i = 0; i < poliz.size(); i++){
+            cout << getTypeValue(poliz[i]) << ", ";
+        }
+        cout << endl << "--------" << endl;
+        e.execute();
     }catch(char const *err){
         if(!strcmp(err, "expected ';'\0")){
             cout << err << " on line: " << line - 1 << endl;
         }else{
             cout << err << " on line: " << line << endl;
         }
+    }catch(string err){
+        cout << err << " on line: " << line << endl;
     }
     return 0;
 }
