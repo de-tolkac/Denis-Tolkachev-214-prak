@@ -2,3 +2,4 @@
 server
 logFile.txt
 /.vscode
+./cgi-bin/lex
