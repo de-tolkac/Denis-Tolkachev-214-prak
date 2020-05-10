@@ -1,7 +1,6 @@
 #! /bin/sh
 var i;
 var k = 25;
-var showText = true;
 var header = "Тестовая страница на MJS";
 var s = 0;
 for(i = 1; i <= k; i++){
