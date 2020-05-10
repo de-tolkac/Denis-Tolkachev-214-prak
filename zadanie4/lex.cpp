@@ -9,6 +9,8 @@ using namespace std;
 
 int line = 1;
 
+char filename[256];
+
 enum type_of_lex{
     LEX_NULL, LEX_FIN, LEX_FUNCTION, LEX_ID, LEX_VAR, LEX_IF, //0 - 5
     LEX_ELSE, LEX_WHILE, LEX_FOR, LEX_DO, LEX_IN, LEX_BREAK, //6 - 11
@@ -299,9 +301,9 @@ class Scanner{
         c = fgetc(fp);
     }
 public:
-    Scanner(const char* file = "test.mjs"){
+     Scanner(){
         line = 1;
-        fp = fopen(file, "r" ); 
+        fp = fopen(filename, "r" ); 
         CS = H;
         clear();
         gc();
@@ -802,6 +804,9 @@ void Parser::ASSIGN(){
         gl();
         EXPRESSION();
         poliz.push_back(assign);
+    }else if((lex_type == LEX_INC) || (lex_type == LEX_DEC)){
+        poliz.push_back(curr_lex);
+        gl();
     }else{
         throw "expected assignment";
     }
@@ -1568,6 +1573,32 @@ void Executer::execute(){
                 TID[second.intVal].put_assign(); 
                 break;
             }
+            case LEX_INC:
+            {
+                stackField el = args.top(); 
+                args.pop();
+                if(el.type == 0){
+                    int inc = TID[el.intVal].get_int_value() + 1;
+                    TID[el.intVal].put_int_value(inc);
+                }else{
+                    cout << "Неверный тип для инкремента\n";
+                    exit(1);
+                }
+                break;
+            }
+            case LEX_DEC:
+            {
+                stackField el = args.top(); 
+                args.pop();
+                if(el.type == 0){
+                    int inc = TID[el.intVal].get_int_value() - 1;
+                    TID[el.intVal].put_int_value(inc);
+                }else{
+                    cout << "Неверный тип для декремента\n";
+                    exit(1);
+                }
+                break;
+            }
             case LEX_SEMICOLON:
             {
                 break;
@@ -1581,8 +1612,9 @@ void Executer::execute(){
     }
 }
 
-int main(){
+int main(int argc, char** argv){
     try{
+        strcpy(filename, argv[1]);
         Parser test;
         Executer e;
         test.analyze();

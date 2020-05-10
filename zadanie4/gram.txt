@@ -4,7 +4,7 @@ GETENV -> LEX_GETENV(LEX_STR)
 FUNCPARAMS -> LEX_ID M | eps
 M -> , LEX_ID M | eps
 OP -> VALDEF |  EMPTYOP | BLOCK | IFOP | CYCLEOP | GOTOOP | ASSIGN; <poliz.push_back(Lex(LEX_SEMICOLON));> | LEX_WRITE(EXPRESSION)<poliz.push_back(Lex(LEX_WRITE));>;
-ASSIGN -> LEX_ID <poliz.push_back(Lex(POLIZ_ADDRESS, c_val));> [=|+=|-=|*=|/=|%=] EXPRESSION <poliz.push_back(Lex(*знак*));>;
+ASSIGN -> LEX_ID <poliz.push_back(Lex(POLIZ_ADDRESS, c_val));> ([=|+=|-=|*=|/=|%=] EXPRESSION <poliz.push_back(Lex(*знак*));> | [--|++]);
 VALDEF -> var LEX_ID <check_id(LEX_ID); poliz.push_back(curr_lex)> L;
 L -> =EXPRESSION <poliz.push_back(Lex(LEX_EQ));>  F | eps
 F -> , LEX_ID <poliz.push_back(curr_lex)>L | eps
