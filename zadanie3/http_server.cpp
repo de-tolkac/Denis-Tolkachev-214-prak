@@ -11,6 +11,8 @@
 #include <signal.h>
 #include <sys/time.h>
 #include <fcntl.h>
+#include <errno.h>
+#include <stdio.h>
 
 #include "http_server.h"
 
@@ -191,7 +193,7 @@ Server::Server(int portNum, string logFile){
                         }else{
                             string err = "Ошибка открытия файла " + getRequests[pathId].responseFile;
                             printError(err, 500);
-                            char* res = configureResponse(500, "Internal Server Error", true);
+                            char* res = configureResponse(500, "Internal Server Error 1", true);
                             send(clientFD, res, strlen(res), 0);
                             free(res);
                         }
@@ -207,16 +209,16 @@ Server::Server(int portNum, string logFile){
                             dup2(fd, 1);
                             if(!fork()){
                                 chdir("./cgi-bin");
-                                string processName = ".";
-                                processName += path;
-                                //execve()
-                                char **argv = { NULL };
+                                string processName = path;
+                                processName.erase(0, 1);
+                                char *argv[] = { (char*)processName.c_str(), NULL };
                                 string QUERY_STRING = "QUERY_STRING=";
                                 if(reqWithParams){
                                     QUERY_STRING +=  params;
                                 }
                                 char *env[] = {(char*)QUERY_STRING.c_str(), NULL};
                                 execve(processName.c_str(), argv, env);
+                                perror("execve() ");
                                 exit(1);
                             }
                             close(fd);
@@ -236,20 +238,20 @@ Server::Server(int portNum, string logFile){
                                     }else{
                                         string err = "Ошибка открытия файла " + name;
                                         printError(err, 500);
-                                        char* res = configureResponse(500, "Internal Server Error", true);
+                                        char* res = configureResponse(500, "Internal Server Error 2", true);
                                         send(clientFD, res, strlen(res), 0);
                                         free(res);
                                     }
                                 }else{
                                     string err = "CGI процесс завершился со статусом " + to_string(WEXITSTATUS(status));
                                     printError(err, 500);
-                                    char* res = configureResponse(500, "Internal Server Error", true);
+                                    char* res = configureResponse(500, "Internal Server Error 3", true);
                                     send(clientFD, res, strlen(res), 0);
                                 }
                             }else if(WIFSIGNALED(status)){
                                 string err = "CGI процесс прислал сигнал " + to_string(WIFSIGNALED(status));
                                 printError(err, 500);
-                                char* res = configureResponse(500, "Internal Server Error", true);
+                                char* res = configureResponse(500, "Internal Server Error 4", true);
                                 send(clientFD, res, strlen(res), 0);
                             }
                             remove(name.c_str());
