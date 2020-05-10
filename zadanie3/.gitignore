@@ -2,4 +2,4 @@
 server
 logFile.txt
 /.vscode
-./cgi-bin/lex
+cgi-bin/lex
