@@ -301,7 +301,7 @@ class Scanner{
         c = fgetc(fp);
     }
 public:
-    Scanner(){
+     Scanner(){
         line = 1;
         fp = fopen(filename, "r" ); 
         CS = H;
@@ -589,7 +589,7 @@ class Parser{
     int lex_val;
     void gl(){
         curr_lex = scan.getLex();
-        //cout << getTypeName(curr_lex) << ", ";
+        //cout << curr_lex << endl;
         lex_type = curr_lex.GetType();
         lex_val = curr_lex.GetValue();
         //cout << curr_lex << endl;
@@ -619,7 +619,7 @@ class Parser{
 public:
     Parser(){}
     void analyze(){
-          try{
+        try{
             gl();
             S();
             if(lex_type != LEX_FIN){
@@ -803,6 +803,9 @@ void Parser::ASSIGN(){
         gl();
         EXPRESSION();
         poliz.push_back(assign);
+    }else if((lex_type == LEX_INC) || (lex_type == LEX_DEC)){
+        poliz.push_back(curr_lex);
+        gl();
     }else{
         throw "expected assignment";
     }
@@ -1222,11 +1225,11 @@ stackField resolveTypes(stackField first, stackField second){
     }
     catch(out_of_range){
         cout << "int overflow\n";
-        exit(2);
+        exit(1);
     }
     catch(const char* err){
         cout << err << endl;
-        exit(3);
+        exit(1);
     }
 }
 
@@ -1284,7 +1287,7 @@ void Executer::execute(){
                     args.push(el);
                 }else{
                     cout << "POLIZ: indefinite identifier";
-                    exit(4);
+                    exit(1);
                 }
                 break;
             }
@@ -1313,7 +1316,7 @@ void Executer::execute(){
                 args.pop();
                 if(first.type == 1){
                     cout << "Неверный тип операндов: string\n";
-                    exit(5);
+                    exit(1);
                 }
                 second  = resolveTypes(first, second);
                 stackField res = {first.type, first.intVal || second.intVal, "\0",  first.boolVal || second.boolVal};   
@@ -1330,7 +1333,7 @@ void Executer::execute(){
                 args.pop(); 
                 if(first.type == 1){
                     cout << "Неверный тип операндов: string\n";
-                    exit(6);
+                    exit(1);
                 }
                 second  = resolveTypes(first, second);
                 stackField res = {first.type, first.intVal && second.intVal, "\0",  first.boolVal && second.boolVal};   
@@ -1378,7 +1381,7 @@ void Executer::execute(){
                 args.pop();
                 if(first.type == 1){
                     cout << "Неверный тип операндов: string\n";
-                    exit(7);
+                    exit(1);
                 }
                 second  = resolveTypes(first, second);
                 stackField res = {first.type, first.intVal - second.intVal, "\0",  first.boolVal - second.boolVal};   
@@ -1394,7 +1397,7 @@ void Executer::execute(){
                 args.pop();
                 if((first.type == 1) || (first.type == 2)){
                     cout << "Неверный тип операндов при делении\n";
-                    exit(8);
+                    exit(1);
                 }
                 second  = resolveTypes(first, second);
                 stackField res;
@@ -1405,7 +1408,7 @@ void Executer::execute(){
                     res.boolVal = first.boolVal;
                 }else{
                     cout << "Ошибка!. Деление на ноль!\n";
-                    exit(9);
+                    exit(1);
                 }
                 args.push(res);
                 break;
@@ -1419,7 +1422,7 @@ void Executer::execute(){
                 args.pop();
                 if(first.type == 1){
                     cout << "Неверный тип операндов при умножении\n";
-                    exit(10);
+                    exit(1);
                 }
                 second  = resolveTypes(first, second);
                 stackField res = {first.type, first.intVal * second.intVal, "\0",  first.boolVal * second.boolVal};   
@@ -1569,13 +1572,39 @@ void Executer::execute(){
                 TID[second.intVal].put_assign(); 
                 break;
             }
+            case LEX_INC:
+            {
+                stackField el = args.top(); 
+                args.pop();
+                if(el.type == 0){
+                    int inc = TID[el.intVal].get_int_value() + 1;
+                    TID[el.intVal].put_int_value(inc);
+                }else{
+                    cout << "Неверный тип для инкремента\n";
+                    exit(1);
+                }
+                break;
+            }
+            case LEX_DEC:
+            {
+                stackField el = args.top(); 
+                args.pop();
+                if(el.type == 0){
+                    int inc = TID[el.intVal].get_int_value() - 1;
+                    TID[el.intVal].put_int_value(inc);
+                }else{
+                    cout << "Неверный тип для декремента\n";
+                    exit(1);
+                }
+                break;
+            }
             case LEX_SEMICOLON:
             {
                 break;
             }
             default:
                 cout << "POLIZ: unexpected elem\n";
-                exit(11);
+                exit(1);
                 break;
         }
         index++;
@@ -1595,10 +1624,10 @@ int main(int argc, char** argv){
         }else{
             cout << err << " on line: " << line << endl;
         }
-        exit(12);
+        exit(1);
     }catch(string err){
         cout << err << " on line: " << line << endl;
-        exit(13);
+        exit(1);
     }
     return 0;
 }
