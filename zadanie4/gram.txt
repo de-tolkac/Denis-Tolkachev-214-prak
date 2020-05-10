@@ -1,8 +1,9 @@
 S -> FUNC | OP | LEX_READ(LEX_ID<poliz.push_back(Lex(POLIZ_ADDRESS, c_val)); poliz.push_back(Lex(LEX_READ));>); | LEX_WRITE(EXPRESSION)<poliz.push_back(Lex(LEX_WRITE));>;
 FUNC -> function LEX_ID (FUNCPARAMS) OP
+GETENV -> LEX_GETENV(LEX_STR)
 FUNCPARAMS -> LEX_ID M | eps
 M -> , LEX_ID M | eps
-OP -> VALDEF |  EMPTYOP | BLOCK | IFOP | CYCLEOP | GOTOOP | ASSIGN; <poliz.push_back(Lex(LEX_SEMICOLON));>
+OP -> VALDEF |  EMPTYOP | BLOCK | IFOP | CYCLEOP | GOTOOP | ASSIGN; <poliz.push_back(Lex(LEX_SEMICOLON));> | LEX_WRITE(EXPRESSION)<poliz.push_back(Lex(LEX_WRITE));>;
 ASSIGN -> LEX_ID <poliz.push_back(Lex(POLIZ_ADDRESS, c_val));> [=|+=|-=|*=|/=|%=] EXPRESSION <poliz.push_back(Lex(*знак*));>;
 VALDEF -> var LEX_ID <check_id(LEX_ID); poliz.push_back(curr_lex)> L;
 L -> =EXPRESSION <poliz.push_back(Lex(LEX_EQ));>  F | eps
@@ -18,4 +19,4 @@ GOTOOP -> break; | continue; | return EXPR;
 EXPRESSION -> E1 [<|>|<=|>=|==|!=] E1 <poliz.push_back(curr_lex);> | E1
 E1 -> T{[+ | - | '||']T<poliz.push_back(curr_lex);>}
 T -> K{[ . | * | / | && ]K<poliz.push_back(curr_lex);>}
-K -> LEX_ID <poliz.push_back(curr_lex);> | LEX_NUM <poliz.push_back(curr_lex);> | LEX_STR <poliz.push_back(curr_lex);> | LEX_TRUE <poliz.push_back(curr_lex);> | LEX_FALSE <poliz.push_back(curr_lex);> | !K <poliz.push_back(curr_lex);> | (EXPRESSION)
+K -> GETENV | LEX_ID <poliz.push_back(curr_lex);> | LEX_NUM <poliz.push_back(curr_lex);> | LEX_STR <poliz.push_back(curr_lex);> | LEX_TRUE <poliz.push_back(curr_lex);> | LEX_FALSE <poliz.push_back(curr_lex);> | !K <poliz.push_back(curr_lex);> | (EXPRESSION)

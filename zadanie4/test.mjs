@@ -1,21 +1,20 @@
-# etc
-read(s);
-write(true);
-write("Hello, world!");
-write(1);
-var i = true;
-s += 10;
-if(i + 4 > 6){
-    i = 3;
+#! /bin/sh
+var i;
+var showText = true;
+var header = "Тестовая страница на MJS";
+var s = 0;
+for(i = 1; i <= 25; i = i + 1){
+    s = s + i;
 }
-while(i == 6){
-    i = 3;
-}
-if(i < 3){
-    var c;
+write("<html>");
+write("<body>");
+write("<h1>" + header + "</h1>");
+write("<p>Параметры запроса: " + getenv("LANG")  + "</p>");
+write("<p>Сумма чисел от 1 до 25: " + s + "</p>");
+if(showText){
+    write("<p>Текст показываем</p>");
 }else{
-    i = 3;
+    write("<p>Текст не показываем</p>");
 }
-for(i = 0; i < 10; i = i + 1){
-    s += i;
-}
+write("</body>");
+write("</html>");

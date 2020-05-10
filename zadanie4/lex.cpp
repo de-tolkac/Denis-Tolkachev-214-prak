@@ -22,7 +22,7 @@ enum type_of_lex{
     LEX_PERCENTEQ, LEX_MULTIPLYEQ, LEX_AMP, LEX_PIPE, LEX_LFBRACKET,//49 - 53
     LEX_RFBRACKET, LEX_DOT, LEX_SLASHEQ,//54 - 56
     POLIZ_GO, POLIZ_FGO, POLIZ_LABEL, POLIZ_ADDRESS, POLIZ_BLANK, // 57 - 61
-    LEX_READ, LEX_WRITE //62 - 63
+    LEX_READ, LEX_WRITE, LEX_GETENV //62 - 64
 };
 
 
@@ -112,6 +112,7 @@ const char* getTypeName(Lex l){
         case 61: return "POLIZ_BLANK"; break;
         case 62: return "LEX_READ"; break;
         case 63: return "LEX_WRITE"; break;
+        case 64: return "LEX_GETENV"; break;
     }
 }
 
@@ -182,20 +183,38 @@ const char* getTypeValue(Lex l){
         case 61: return "POLIZ_BLANK"; break;
         case 62: return "read"; break;
         case 63: return "write"; break;
+         case 64: return "getenv"; break;
     }
 }
+
+struct stackField{
+    int type; //0 - int, 1 - string, 2 - boolean
+    int intVal;
+    string stringVal;
+    bool boolVal;
+};
 
 class Ident{
     char       * name;
     bool         declare;
     type_of_lex  type;
     bool         assign;
-    int          value;
+    int          valueType; //0 - int, 1 - string, 2 - boolean
+    int          intValue;
+    string       stringValue;
+    bool         boolValue;
 public:
-    Ident() { declare = false; assign = false; }
+    Ident() { 
+        declare = false; 
+        assign = false; 
+        valueType = 0; 
+        intValue = 0;
+        stringValue = "\0";
+        boolValue = false;
+    }
     char* get_name () { return name; }
     void put_name (const char *n){
-        name = new char [ strlen(n)+1];
+        name = new char[strlen(n)+1];
         strcpy(name,n);
     }
     bool get_declare () { return declare; }
@@ -204,8 +223,22 @@ public:
     void put_type(type_of_lex t) { type = t; }
     bool get_assign  () { return assign; }
     void put_assign  (){ assign = true; }
-    int  get_value   () { return value; }
-    void put_value   (int v){ value = v; }
+    int  get_int_value(){ return intValue; }
+    void put_int_value (int v){ valueType = 0; intValue = v; }
+    string  get_string_value(){ return stringValue; }
+    void put_string_value (int v){ valueType = 1; stringValue = v; }
+    bool  get_bool_value(){ return boolValue; }
+    void put_bool_value (int v){ valueType = 2; boolValue = v; }
+    stackField getVar(){
+        stackField res = {valueType, intValue, stringValue, boolValue};
+        return res;
+    }
+    void putVar(stackField elem){
+        valueType = elem.type;
+        intValue = elem.intVal;
+        stringValue = elem.stringVal;
+        boolValue = elem.boolVal;
+    }
 };
  
 class Tabl_ident{
@@ -285,6 +318,7 @@ char* Scanner::TW[] = {
     (char *)"for", (char *)"do", (char *)"in",
     (char *)"break", (char *)"continue", (char *)"return",
     (char*)"read", (char*)"write", (char*)"true", (char*)"false",
+    (char*)"getenv", 
     NULL
 };
 
@@ -294,6 +328,7 @@ type_of_lex Scanner::words[] = {
     LEX_FOR, LEX_DO, LEX_IN,
     LEX_BREAK, LEX_CONTINUE, LEX_RETURN,
     LEX_READ, LEX_WRITE, LEX_TRUE, LEX_FALSE,
+    LEX_GETENV,
     LEX_NULL
 };
 
@@ -552,13 +587,14 @@ class Parser{
     int lex_val;
     void gl(){
         curr_lex = scan.getLex();
-        //cout << getTypeName(curr_lex) << ", ";
+        //cout << curr_lex << endl;
         lex_type = curr_lex.GetType();
         lex_val = curr_lex.GetValue();
         //cout << curr_lex << endl;
     }
     void S(); //done
     void FUNC(); //done
+    void GETENV();
     void FUNCPARAMS(); //done
     void M(); //done
     void OP(); //done
@@ -581,7 +617,7 @@ class Parser{
 public:
     Parser(){}
     void analyze(){
-          try{
+        try{
             gl();
             S();
             if(lex_type != LEX_FIN){
@@ -682,6 +718,35 @@ void Parser::FUNC(){
     }
 }
 
+void Parser::GETENV(){
+    if(lex_type == LEX_GETENV){
+        gl();
+        if(lex_type == LEX_LRBRACKET){
+            gl();
+            if(lex_type == LEX_STR){
+                Lex res = curr_lex;
+                int index = curr_lex.GetValue();
+                string param = LSA[index];
+                gl();
+                if(lex_type == LEX_RRBRACKET){
+                    char* resParam = getenv(param.c_str());
+                    LSA[index] = resParam;
+                    poliz.push_back(res);
+                    gl();
+                }else{
+                    throw "expected ')'";
+                }
+            }else{
+                throw "expected string";
+            }
+        }else{
+            throw "expected '('";
+        }
+    }else{
+        throw "expected 'getenv'";
+    }
+}
+
 void Parser::OP(){
     //cout << "OP\n";
     if(lex_type == LEX_VAR){
@@ -703,6 +768,26 @@ void Parser::OP(){
             gl();
         }else{
             throw "expected ';'";
+        }
+    }else if(lex_type == LEX_WRITE){
+        gl();
+        if(lex_type == LEX_LRBRACKET){
+            gl();
+            EXPRESSION();
+            if(lex_type == LEX_RRBRACKET){
+                gl();
+                poliz.push_back(Lex(LEX_WRITE));
+                if(lex_type == LEX_SEMICOLON){
+                    gl();
+                }else{
+                    throw "expected ;";
+                }
+            }else{
+                throw "expected ')'";
+            }
+            
+        }else{
+            throw "expected '('";
         }
     }else{
         throw "expected var/;/if/while/for/break/continue/return or name";
@@ -749,7 +834,7 @@ void Parser::VALDEF(){
         gl();
         if(lex_type == LEX_ID){
             checkId(curr_lex);
-            poliz.push_back(curr_lex);
+            poliz.push_back(Lex(POLIZ_ADDRESS, lex_val));
             gl();
             L();
             if(lex_type == LEX_SEMICOLON){
@@ -1036,16 +1121,18 @@ void Parser::T(){
                 throw "expected name";
             }
         }else{
+            gl();
             K();
             poliz.push_back(op);
-            gl();
         }
     }
 }
 
 void Parser::K(){
     //cout << "K\n";
-    if(lex_type == LEX_ID){
+    if(lex_type == LEX_GETENV){
+        GETENV();
+    }else if(lex_type == LEX_ID){
         poliz.push_back(curr_lex);
         gl();
     }else if(lex_type == LEX_NUM){
@@ -1074,12 +1161,6 @@ void Parser::K(){
         }
     }
 }
-struct stackField{
-    int type; //0 - int, 1 - string, 2 - boolean
-    int intVal;
-    string stringVal;
-    bool boolVal;
-};
 
 stackField resolveTypes(stackField first, stackField second){
     try{
@@ -1155,33 +1236,61 @@ public:
 };
 
 void Executer::execute(){
-    int index = 0, size = (int)poliz.size();
+    int i, index = 0, size = (int)poliz.size();
     stack<stackField> args;
     while(index < size){
         c_lex = poliz[index];
         switch(c_lex.GetType()){
-            case POLIZ_ADDRESS: 
             case POLIZ_LABEL:
-            case LEX_NUM:
             {
+                //cout <<"POLIZ_LABEL" << endl;
+                stackField newField = {0, c_lex.GetValue(), "\0", false};
+                args.push(newField);
+                break;
+            }
+            case POLIZ_ADDRESS: case LEX_NUM:
+            {
+                /* POLIZ_ADDRESS, POLIZ_LABEL, number */
+                // cout << "POLIZ_ADDRESS LEX_NUM" << endl;
                 stackField newField = {0, c_lex.GetValue(), "\0", false};
                 args.push(newField);
                 break;
             }
             case LEX_STR:
             {
+                /* String */
+                // cout << "LEX_STR" << endl;
                 stackField newField = {1, 0, LSA[c_lex.GetValue()], false};
                 args.push(newField);
                 break;
             }
-            case LEX_TRUE:
-            case LEX_FALSE:{
+            case LEX_TRUE: case LEX_FALSE:
+            {
+                /* true, false */
+                // cout <<"BOOL" << endl;
                 stackField newField = {2, 0, "\0", false};
                 args.push(newField);
                 break;
             }
+            case LEX_ID:
+            {   
+                /* id */
+                //cout << "LEX_ID"<< endl;
+                int val = c_lex.GetValue();
+                //cout << TID[val].get_int_value() << endl;
+                if(TID[val].get_assign()){
+                    stackField el = TID[val].getVar();
+                    args.push(el);
+                }else{
+                    cout << "POLIZ: indefinite identifier";
+                    exit(1);
+                }
+                break;
+            }
             case LEX_WRITE:
             {
+                /* write() */
+                //cout << "LEX_WRITE" << endl;
                 stackField field = args.top();
                 if(field.type == 0){
                     cout << field.intVal << endl;
@@ -1195,14 +1304,16 @@ void Executer::execute(){
             }
             case LEX_OR:
             {
-                stackField first = args.top();
-                if(first.type == 1){
-                    cout << "Неверный тип операндов: string";
-                    exit(1);
-                }
-                args.pop();
+                /* || */
+                 //cout << "LEX_OR"<< endl;
                 stackField second = args.top();
                 args.pop();
+                stackField first = args.top();
+                args.pop();
+                if(first.type == 1){
+                    cout << "Неверный тип операндов: string\n";
+                    exit(1);
+                }
                 second  = resolveTypes(first, second);
                 stackField res = {first.type, first.intVal || second.intVal, "\0",  first.boolVal || second.boolVal};   
                 args.push(res);
@@ -1210,20 +1321,260 @@ void Executer::execute(){
             }
             case LEX_AND:
             {
-                stackField first = args.top();
-                if(first.type == 1){
-                    cout << "Неверный тип операндов: string";
-                    exit(1);
-                }
-                args.pop();
+                /* && */
+                // cout << "LEX_AND" << endl;
                 stackField second = args.top();
                 args.pop();
+                stackField first = args.top();
+                args.pop(); 
+                if(first.type == 1){
+                    cout << "Неверный тип операндов: string\n";
+                    exit(1);
+                }
                 second  = resolveTypes(first, second);
                 stackField res = {first.type, first.intVal && second.intVal, "\0",  first.boolVal && second.boolVal};   
                 args.push(res);
                 break;
             }
+            case POLIZ_GO:
+            {
+                //cout <<"POLIZ_GO" << endl;
+                stackField ind = args.top();
+                args.pop();
+                index = ind.intVal - 1;
+                break;
+            }
+            case POLIZ_FGO:
+            {
+                 //cout << "POLIZ_FGO"<< endl;
+                stackField first = args.top();
+                args.pop();
+                i = first.intVal;
+                stackField second = args.top();
+                args.pop();
+                bool jmp = second.boolVal;
+                if (!jmp) index = i - 1;
+                break;
+            }
+            case LEX_PLUS:
+            {
+                 //cout << "LEX_PLUS"<< endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                second  = resolveTypes(first, second);
+                stackField res = {first.type, first.intVal + second.intVal, first.stringVal + second.stringVal,  first.boolVal + second.boolVal};   
+                args.push(res);
+                break;
+            }
+            case LEX_MINUS:
+            {
+                // cout << "LEX_MINUS"<< endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                if(first.type == 1){
+                    cout << "Неверный тип операндов: string\n";
+                    exit(1);
+                }
+                second  = resolveTypes(first, second);
+                stackField res = {first.type, first.intVal - second.intVal, "\0",  first.boolVal - second.boolVal};   
+                args.push(res);
+                break;
+            }
+            case LEX_SLASH:
+            {
+                 //cout << "LEX_SLASH" << endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                if((first.type == 1) || (first.type == 2)){
+                    cout << "Неверный тип операндов при делении\n";
+                    exit(1);
+                }
+                second  = resolveTypes(first, second);
+                stackField res;
+                if(!second.intVal){
+                    res.type = first.type;
+                    res.intVal = first.intVal / second.intVal;
+                    res.stringVal =  "\0";
+                    res.boolVal = first.boolVal;
+                }else{
+                    cout << "Ошибка!. Деление на ноль!\n";
+                    exit(1);
+                }
+                args.push(res);
+                break;
+            }
+            case LEX_MULTIPLY:
+            {
+                // cout << "LEX_MULTIPLY"<< endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                if(first.type == 1){
+                    cout << "Неверный тип операндов при умножении\n";
+                    exit(1);
+                }
+                second  = resolveTypes(first, second);
+                stackField res = {first.type, first.intVal * second.intVal, "\0",  first.boolVal * second.boolVal};   
+                args.push(res);
+                break;
+            }
+            case LEX_DOUBLEEQUAL:
+            {
+                //cout << "LEX_DOUBLEEQUAL"<< endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                second  = resolveTypes(first, second);
+                stackField res;
+                res.type = 2;
+                res.intVal = 0;
+                res.stringVal = "\0";
+                if(first.type == 0){
+                    res.boolVal = (first.intVal == second.intVal);
+                }else if(first.type == 1){
+                    res.boolVal = (first.stringVal == second.stringVal);
+                }else if(second.type == 2){
+                    res.boolVal = (first.boolVal == second.boolVal);
+                } 
+                args.push(res);
+                break;
+            }
+            case LEX_LESS:
+            {
+                 //cout << "LEX_LESS" << endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                second  = resolveTypes(first, second);
+                stackField res;
+                res.type = 2;
+                res.intVal = 0;
+                res.stringVal = "\0";
+                if(first.type == 0){
+                    res.boolVal = (first.intVal < second.intVal);
+                }else if(first.type == 1){
+                    res.boolVal = (first.stringVal < second.stringVal);
+                }else if(second.type == 2){
+                    res.boolVal = (first.boolVal < second.boolVal);
+                } 
+                args.push(res);
+                break;
+            }
+            case LEX_LESSEQ:
+            {
+                // cout << "LEX_LESSEQ" << endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                second  = resolveTypes(first, second);
+                stackField res;
+                res.type = 2;
+                res.intVal = 0;
+                res.stringVal = "\0";
+                if(first.type == 0){
+                    res.boolVal = (first.intVal <= second.intVal);
+                }else if(first.type == 1){
+                    res.boolVal = (first.stringVal <= second.stringVal);
+                }else if(second.type == 2){
+                    res.boolVal = (first.boolVal <= second.boolVal);
+                } 
+                args.push(res);
+                break;
+            }
+            case LEX_MORE:
+            {
+                 //cout <<"LEX_MORE" << endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                second  = resolveTypes(first, second);
+                stackField res;
+                res.type = 2;
+                res.intVal = 0;
+                res.stringVal = "\0";
+                if(first.type == 0){
+                    res.boolVal = (first.intVal > second.intVal);
+                }else if(first.type == 1){
+                    res.boolVal = (first.stringVal > second.stringVal);
+                }else if(second.type == 2){
+                    res.boolVal = (first.boolVal > second.boolVal);
+                } 
+                args.push(res);
+                break;
+            }
+            case LEX_MOREEQ:
+            {
+                // cout << "LEX_MOREEQ"<< endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                second  = resolveTypes(first, second);
+                stackField res;
+                res.type = 2;
+                res.intVal = 0;
+                res.stringVal = "\0";
+                if(first.type == 0){
+                    res.boolVal = (first.intVal >= second.intVal);
+                }else if(first.type == 1){
+                    res.boolVal = (first.stringVal >= second.stringVal);
+                }else if(second.type == 2){
+                    res.boolVal = (first.boolVal >= second.boolVal);
+                } 
+                args.push(res);
+                break;
+            }
+            case LEX_EXCLEQ:
+            {
+                // cout <<"LEX_EXCLEQ"<< endl;
+                stackField second = args.top();
+                args.pop();
+                stackField first = args.top();
+                args.pop();
+                second  = resolveTypes(first, second);
+                stackField res;
+                res.type = 2;
+                res.intVal = 0;
+                res.stringVal = "\0";
+                if(first.type == 0){
+                    res.boolVal = (first.intVal != second.intVal);
+                }else if(first.type == 1){
+                    res.boolVal = (first.stringVal != second.stringVal);
+                }else if(second.type == 2){
+                    res.boolVal = (first.boolVal != second.boolVal);
+                } 
+                args.push(res);
+                break;
+            }
+            case LEX_EQUAL:
+            {   // cout << "LEX_EQUAL" << endl;
+                stackField first = args.top(); 
+                args.pop();
+                //cout << first.type << ", " << first.stringVal << endl;
+                stackField second = args.top(); 
+                args.pop();
+                TID[second.intVal].putVar(first);
+                TID[second.intVal].put_assign(); 
+                break;
+            }
+            case LEX_SEMICOLON:
+            {
+                break;
+            }
             default:
+                cout << "POLIZ: unexpected elem\n";
+                exit(1);
                 break;
         }
         index++;
@@ -1247,8 +1598,10 @@ int main(){
         }else{
             cout << err << " on line: " << line << endl;
         }
+        exit(1);
     }catch(string err){
         cout << err << " on line: " << line << endl;
+        exit(1);
     }
     return 0;
 }
