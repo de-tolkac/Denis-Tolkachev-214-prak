@@ -1207,11 +1207,9 @@ stackField resolveTypes(stackField first, stackField second){
                 }
             }else if(second.type == 1){
                 if(second.stringVal == "true"){
-
-                }else if(second.stringVal == "false"){
-
+                    res.boolVal = true;
                 }else{
-                    throw "Невозможно преобразовать string в boolean";
+                    res.boolVal = false;
                 }
             }else if(second.type == 2){
                 return second;
