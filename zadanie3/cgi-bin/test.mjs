@@ -1,6 +1,6 @@
 #! /Users/DEN/dev/c++/git/Denis-Tolkachev-214-prak/zadanie3/cgi-bin/lex
 var i;
-var k = 15;
+var k = 25;
 var header = "Тестовая страница на MJS";
 var s = 0;
 for(i = 1; i <= k; i++){

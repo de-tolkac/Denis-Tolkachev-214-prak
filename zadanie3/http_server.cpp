@@ -112,7 +112,7 @@ Server::Server(int portNum, string logFile){
         }
     }
 
-    /* Регистрируем дирректорию с CGI-программами */
+    /* Регистрируем директорию с CGI-программами */
     void Server::use(string dirName){
         IS_CGI_SET = true;
         cgiDir = dirName;
